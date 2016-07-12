@@ -55,7 +55,7 @@ public abstract class AbstractCache {
         }
     }
 
-    private <T> void retryRegister(final String key, final CachePloy<T> cachePloy){
+    protected  <T> void retryRegister(final String key, final CachePloy<T> cachePloy){
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
@@ -64,7 +64,7 @@ public abstract class AbstractCache {
         }, this.config.getRetryRegisterDelayMillisSecond());
     }
 
-    private <T> void initPloy(String key, CachePloy<T> cachePloy){
+    protected  <T> void initPloy(String key, CachePloy<T> cachePloy){
         cachePloyRegister.put(key, cachePloy);
         if(cachePloy.getIntervalSeconds() > 0){
             initIntervalCache(key, cachePloy);
@@ -73,7 +73,7 @@ public abstract class AbstractCache {
         }
     }
 
-    private <T> void initIntervalCache(final String key, final CachePloy<T> cachePloy){
+    protected <T> void initIntervalCache(final String key, final CachePloy<T> cachePloy){
         scheduler.run(key, cachePloy.getDelaySeconds(), cachePloy.getIntervalSeconds(), new Runnable() {
             @Override
             public void run() {
@@ -111,4 +111,19 @@ public abstract class AbstractCache {
      * @return
      */
     protected abstract  <T> T get(String key);
+
+    /**
+     *
+     * @param key
+     * @param cachePloy
+     * @param <T>
+     * @return
+     */
+    protected <T> T get(String key, CachePloy<T> cachePloy){
+        registerLock.lock();
+        if(!cachePloyRegister.containsKey(key)){
+            initPloy(key, cachePloy);
+        }
+        return get(key);
+    }
 }

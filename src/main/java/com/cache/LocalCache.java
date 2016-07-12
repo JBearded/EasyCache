@@ -57,7 +57,6 @@ public class LocalCache extends AbstractCache{
         return result;
     }
 
-
     class LocalValue<T>{
         T value;
         long expire;
