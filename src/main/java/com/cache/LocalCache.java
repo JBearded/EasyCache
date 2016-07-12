@@ -15,11 +15,9 @@ public class LocalCache{
 
     private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
 
-    private ConcurrentMap<String, CachePloy<String>> cachePloyRegister = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, CachePloy> cachePloyRegister = new ConcurrentHashMap<>();
 
-    private ConcurrentMap<String, CachePloy<String>> missCachePloyRegister = new ConcurrentHashMap<>();
-
-//    private boolean isOpen
+    private ConcurrentMap<String, CachePloy> missCachePloyRegister = new ConcurrentHashMap<>();
 
     private Lock registerLock = new ReentrantLock();
 
@@ -30,7 +28,7 @@ public class LocalCache{
      * @param key 缓存key
      * @param cachePloy 缓存策略
      */
-    public void register(String key, CachePloy<String> cachePloy){
+    public <T> void register(String key, CachePloy<T> cachePloy){
 
         if(!checkPloyAvailable(cachePloy) || key == null || "".equals(key.trim())){
             return;
@@ -52,12 +50,12 @@ public class LocalCache{
         }
     }
 
-    private boolean checkPloyAvailable(CachePloy cachePloy){
+    private <T> boolean checkPloyAvailable(CachePloy<T> cachePloy){
 
         return true;
     }
 
-    private void initPloy(String key, CachePloy cachePloy){
+    private <T> void initPloy(String key, CachePloy<T> cachePloy){
         cachePloyRegister.put(key, cachePloy);
         if(cachePloy.getIntervalSeconds() > 0){
             initTimerCache(key, cachePloy);
@@ -66,29 +64,29 @@ public class LocalCache{
         }
     }
 
-    private void initTimerCache(final String key, final CachePloy cachePloy){
+    private <T> void initTimerCache(final String key, final CachePloy<T> cachePloy){
         scheduler.run(key, cachePloy.getDelaySeconds(), cachePloy.getIntervalSeconds(), new Runnable() {
             @Override
             public void run() {
-                MissCacheHandler<String> handler = cachePloy.getMissCacheHandler();
-                String value = handler.getData();
+                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+                T value = handler.getData();
                 set(key, value);
             }
         });
     }
 
-    private void initExpireCache(String key, CachePloy cachePloy){
-        MissCacheHandler<String> handler = cachePloy.getMissCacheHandler();
-        String value = handler.getData();
+    private <T> void initExpireCache(String key, CachePloy<T> cachePloy){
+        MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+        T value = handler.getData();
         set(key, value, cachePloy.getExpireSeconds());
     }
 
-    private void set(String key, String value){
+    private <T> void set(String key, T value){
         this.set(key, value, DEFAULT_EXPIRE_SECONDS);
     }
 
-    private void set(String key, String value, int expireSeconds){
-        LocalValue localValue = new LocalValue();
+    private <T> void set(String key, T value, int expireSeconds){
+        LocalValue<T> localValue = new LocalValue<T>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
         caches.put(key, localValue);
@@ -99,21 +97,22 @@ public class LocalCache{
      * @param key 注册过的缓存key
      * @return
      */
-    public String get(String key){
+    public <T> T get(String key, Class<T> clazz){
         long currentTimeMillis = System.currentTimeMillis();
-        LocalValue localValue = caches.get(key);
+        LocalValue<T> localValue = caches.get(key);
         long expire = localValue.expire;
         if(expire >= currentTimeMillis){
             return localValue.value;
         }else{
-            CachePloy cachePloy = cachePloyRegister.get(key);
+            CachePloy<T> cachePloy = cachePloyRegister.get(key);
             initExpireCache(key, cachePloy);
-            return caches.get(key).value;
+            localValue = caches.get(key);
+            return localValue.value;
         }
     }
 
-    class LocalValue{
-        String value;
+    class LocalValue<T>{
+        T value;
         long expire;
     }
 }

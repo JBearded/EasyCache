@@ -1,7 +1,7 @@
-import com.cache.*;
+import com.cache.CachePloy;
+import com.cache.LocalCache;
+import com.cache.MissCacheHandler;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -14,20 +14,38 @@ public class Main {
 
         final AtomicInteger number = new AtomicInteger(1);
         LocalCache localCache = new LocalCache();
-        localCache.register("key", new CachePloy<String>(5, new MissCacheHandler<String>() {
+        localCache.register("key", new CachePloy(5, new MissCacheHandler<MyValue>() {
             @Override
-            public String getData() {
-                return String.valueOf(number.incrementAndGet());
+            public MyValue getData() {
+                return new MyValue(number.incrementAndGet(), "myvalue");
             }
         }));
-        System.out.println(localCache.get("key"));
+        System.out.println(localCache.get("key", MyValue.class).getId());
         Thread.sleep(1000);
-        System.out.println(localCache.get("key"));
+        System.out.println(localCache.get("key", MyValue.class).getId());
         Thread.sleep(1000*5);
-        System.out.println(localCache.get("key"));
+        System.out.println(localCache.get("key", MyValue.class).getId());
         Thread.sleep(1000*5);
-        System.out.println(localCache.get("key"));
+        System.out.println(localCache.get("key", MyValue.class).getId());
         Thread.sleep(1000*3);
-        System.out.println(localCache.get("key"));
+        System.out.println(localCache.get("key", MyValue.class).getId());
+    }
+
+    static class MyValue {
+        private int id;
+        private String name;
+
+        public MyValue(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 }
