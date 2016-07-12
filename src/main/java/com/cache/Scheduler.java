@@ -1,7 +1,5 @@
 package com.cache;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -12,20 +10,23 @@ public class Scheduler {
 
     private ScheduledExecutorService scheduledExecutorService;
 
-    private Map<String, ScheduledFuture> scheduledFutureMap = new HashMap<>();
+    private ConcurrentMap<String, ScheduledFuture> scheduledFutureMap = new ConcurrentHashMap<>();
 
     public Scheduler(int corePoolSize){
         ThreadFactory threadFactory = new BaseThreadFactory("easy-cache");
         this.scheduledExecutorService = Executors.newScheduledThreadPool(corePoolSize, threadFactory);
     }
 
+    /**
+     * 延迟一段时间后执行, 并重复在间隔时间后执行
+     * @param key 任务标识, 可用来取消任务
+     * @param delay 一开始的延迟时间, =0即马上执行
+     * @param interval  重复间隔时间, 必须>0
+     * @param runnable
+     */
     public void run(String key, int delay, int interval, Runnable runnable){
         ScheduledFuture scheduledFutureTask = this.scheduledExecutorService.scheduleWithFixedDelay(runnable, delay, interval, TimeUnit.SECONDS);
         this.scheduledFutureMap.put(key, scheduledFutureTask);
-    }
-
-    public void run(String key, int interval, Runnable runnable){
-        this.run(key, 0, interval, runnable);
     }
 
     public void cancel(String key){

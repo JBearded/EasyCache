@@ -1,5 +1,7 @@
 package com.cache;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -11,17 +13,24 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class LocalCache{
 
-    private Scheduler scheduler = new Scheduler(64);
+    private Scheduler scheduler;
+
+    private CacheConfig config;
 
     private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
 
     private ConcurrentMap<String, CachePloy> cachePloyRegister = new ConcurrentHashMap<>();
 
-    private ConcurrentMap<String, CachePloy> missCachePloyRegister = new ConcurrentHashMap<>();
-
     private Lock registerLock = new ReentrantLock();
 
-    private int DEFAULT_EXPIRE_SECONDS = 60 * 60 * 24;
+    public LocalCache() {
+        this.config = new CacheConfig();
+        this.scheduler = new Scheduler(this.config.getSchedulerCorePoolSize());
+    }
+
+    public LocalCache(CacheConfig config){
+        this.config = config;
+    }
 
     /**
      * 注册缓存key, 设置过期缓存或者定时刷新缓存
@@ -30,9 +39,6 @@ public class LocalCache{
      */
     public <T> void register(String key, CachePloy<T> cachePloy){
 
-        if(!checkPloyAvailable(cachePloy) || key == null || "".equals(key.trim())){
-            return;
-        }
         if(registerLock.tryLock()){
             try{
                 if(cachePloyRegister.containsKey(key)){
@@ -46,25 +52,29 @@ public class LocalCache{
                 registerLock.unlock();
             }
         }else{
-            missCachePloyRegister.put(key, cachePloy);
+            retryRegister(key, cachePloy);
         }
     }
 
-    private <T> boolean checkPloyAvailable(CachePloy<T> cachePloy){
-
-        return true;
+    private <T> void retryRegister(final String key, final CachePloy<T> cachePloy){
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                register(key, cachePloy);
+            }
+        }, this.config.getRetryRegisterDelayMillisSecond());
     }
 
     private <T> void initPloy(String key, CachePloy<T> cachePloy){
         cachePloyRegister.put(key, cachePloy);
         if(cachePloy.getIntervalSeconds() > 0){
-            initTimerCache(key, cachePloy);
+            initIntervalCache(key, cachePloy);
         }else{
             initExpireCache(key, cachePloy);
         }
     }
 
-    private <T> void initTimerCache(final String key, final CachePloy<T> cachePloy){
+    private <T> void initIntervalCache(final String key, final CachePloy<T> cachePloy){
         scheduler.run(key, cachePloy.getDelaySeconds(), cachePloy.getIntervalSeconds(), new Runnable() {
             @Override
             public void run() {
@@ -78,11 +88,15 @@ public class LocalCache{
     private <T> void initExpireCache(String key, CachePloy<T> cachePloy){
         MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
         T value = handler.getData();
-        set(key, value, cachePloy.getExpireSeconds());
+        if(cachePloy.getExpireSeconds() <= 0){
+            set(key, value);
+        }else{
+            set(key, value, cachePloy.getExpireSeconds());
+        }
     }
 
     private <T> void set(String key, T value){
-        this.set(key, value, DEFAULT_EXPIRE_SECONDS);
+        this.set(key, value, this.config.getDefaultExpireSeconds());
     }
 
     private <T> void set(String key, T value, int expireSeconds){
@@ -93,23 +107,37 @@ public class LocalCache{
     }
 
     /**
-     * 获取注册过的缓存
+     * 获取注册过的缓存, get(key, T.class)调用
      * @param key 注册过的缓存key
      * @return
      */
     public <T> T get(String key, Class<T> clazz){
+        return get(key);
+    }
+
+    /**
+     * 获取注册过的缓存, <T>get(key)调用
+     * @param key 注册过的缓存key
+     * @return
+     */
+    public <T> T get(String key){
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
-        long expire = localValue.expire;
-        if(expire >= currentTimeMillis){
-            return localValue.value;
-        }else{
-            CachePloy<T> cachePloy = cachePloyRegister.get(key);
-            initExpireCache(key, cachePloy);
-            localValue = caches.get(key);
-            return localValue.value;
+        T result = null;
+        if(localValue != null){
+            long expire = localValue.expire;
+            if(expire >= currentTimeMillis){
+                result = localValue.value;
+            }else{
+                CachePloy<T> cachePloy = cachePloyRegister.get(key);
+                initExpireCache(key, cachePloy);
+                localValue = caches.get(key);
+                result = localValue.value;
+            }
         }
+        return result;
     }
+
 
     class LocalValue<T>{
         T value;

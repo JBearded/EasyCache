@@ -1,3 +1,4 @@
+import com.cache.CacheConfig;
 import com.cache.CachePloy;
 import com.cache.LocalCache;
 import com.cache.MissCacheHandler;
@@ -13,14 +14,15 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
 
         final AtomicInteger number = new AtomicInteger(1);
-        LocalCache localCache = new LocalCache();
+        CacheConfig config = new CacheConfig(60*60, 32, 2000);
+        LocalCache localCache = new LocalCache(config);
         localCache.register("key", new CachePloy(5, new MissCacheHandler<MyValue>() {
             @Override
             public MyValue getData() {
                 return new MyValue(number.incrementAndGet(), "myvalue");
             }
         }));
-        System.out.println(localCache.get("key", MyValue.class).getId());
+        System.out.println(localCache.<MyValue>get("key").getId());
         Thread.sleep(1000);
         System.out.println(localCache.get("key", MyValue.class).getId());
         Thread.sleep(1000*5);
