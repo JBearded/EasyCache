@@ -8,6 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * 公用缓存工具
  * @author 谢俊权
  * @create 2016/7/12 13:49
  */

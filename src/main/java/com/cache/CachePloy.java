@@ -1,6 +1,7 @@
 package com.cache;
 
 /**
+ * 缓存策略
  * @author 谢俊权
  * @create 2016/7/9 17:53
  */

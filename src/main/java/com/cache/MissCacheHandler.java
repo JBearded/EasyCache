@@ -1,6 +1,7 @@
 package com.cache;
 
 /**
+ * 没有命中缓存时, 获取数据源的处理器
  * @author 谢俊权
  * @create 2016/7/9 16:33
  */

@@ -3,6 +3,7 @@ package com.cache;
 import com.alibaba.fastjson.JSON;
 
 /**
+ * 远程缓存
  * @author 谢俊权
  * @create 2016/7/9 16:31
  */
