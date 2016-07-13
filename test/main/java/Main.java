@@ -16,6 +16,7 @@ public class Main {
         final AtomicInteger localExpireNumber = new AtomicInteger(0);
         final AtomicInteger localIntervalNumber = new AtomicInteger(0);
         LocalCache localCache = new LocalCache(config);
+        localCache.clearScheduler();
         /*注册过期缓存策略*/
         localCache.register("local-expire-key", new CachePloy(10, new MissCacheHandler<MyValue>() {
             @Override

@@ -1,7 +1,9 @@
 package com.cache;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -11,7 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class LocalCache extends AbstractCache{
 
-    private Map<String, LocalValue> caches = new HashMap<>();
+    private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
 
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
@@ -34,44 +36,50 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T get(String key, Class<T> clazz){
-        rwLock.readLock().lock();
+
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
-        rwLock.readLock().unlock();
-        rwLock.writeLock().lock();
         T result = null;
-        try{
-            if(localValue != null && localValue.expire > currentTimeMillis){
-                result = localValue.value;
-            }else if(localValue == null || localValue.expire <= currentTimeMillis){
-                CachePloy<T> cachePloy = cachePloyRegister.get(key);
-                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
-                result = set(key, handler.getData(), cachePloy.getExpireSeconds());
-            }
-        }finally {
-            rwLock.writeLock().unlock();
+        if(localValue != null && localValue.expire > currentTimeMillis){
+            result = localValue.value;
+        }else if(localValue == null || localValue.expire <= currentTimeMillis){
+            CachePloy<T> cachePloy = cachePloyRegister.get(key);
+            MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+            result = set(key, handler.getData(), cachePloy.getExpireSeconds());
         }
         return result;
     }
 
     @Override
     public <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
-        rwLock.readLock().lock();
+
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
-        rwLock.readLock().unlock();
-        rwLock.writeLock().lock();
         T result = null;
-        try{
-            if(localValue != null && localValue.expire >= currentTimeMillis){
-                result = localValue.value;
-            }else if(localValue == null || localValue.expire < currentTimeMillis){
-                result = set(key, handler.getData(), expireSeconds);
-            }
-        }finally {
-            rwLock.writeLock().unlock();
+        if(localValue != null && localValue.expire >= currentTimeMillis){
+            result = localValue.value;
+        }else if(localValue == null || localValue.expire < currentTimeMillis){
+            result = set(key, handler.getData(), expireSeconds);
         }
         return result;
+    }
+
+    public void clearScheduler(){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DATE, 1);
+        int delay = (int) ((calendar.getTimeInMillis() - System.currentTimeMillis()) / 1000);
+        int interval = 60 * 60 * 24;
+        scheduler.run("clear-caches", delay, interval, new Runnable() {
+            @Override
+            public void run() {
+                caches.clear();
+            }
+        });
     }
 
     class LocalValue<T>{
