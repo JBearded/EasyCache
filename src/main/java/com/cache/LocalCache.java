@@ -41,9 +41,9 @@ public class LocalCache extends AbstractCache{
         rwLock.writeLock().lock();
         T result = null;
         try{
-            if(localValue != null && localValue.expire >= currentTimeMillis){
+            if(localValue != null && localValue.expire > currentTimeMillis){
                 result = localValue.value;
-            }else if(localValue == null || localValue.expire < currentTimeMillis){
+            }else if(localValue == null || localValue.expire <= currentTimeMillis){
                 CachePloy<T> cachePloy = cachePloyRegister.get(key);
                 MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
                 result = set(key, handler.getData(), cachePloy.getExpireSeconds());

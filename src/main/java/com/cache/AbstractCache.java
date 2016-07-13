@@ -20,7 +20,7 @@ public abstract class AbstractCache {
 
     protected ConcurrentMap<String, CachePloy> cachePloyRegister = new ConcurrentHashMap<>();
 
-    protected Lock registerLock = new ReentrantLock();
+    private final Lock registerLock = new ReentrantLock();
 
     public AbstractCache() {
         this(new CacheConfig());
