@@ -16,12 +16,14 @@ public class Main {
         final AtomicInteger localExpireNumber = new AtomicInteger(0);
         final AtomicInteger localIntervalNumber = new AtomicInteger(0);
         LocalCache localCache = new LocalCache(config);
+        /*注册过期缓存策略*/
         localCache.register("local-expire-key", new CachePloy(10, new MissCacheHandler<MyValue>() {
             @Override
             public MyValue getData() {
                 return new MyValue(localExpireNumber.incrementAndGet(), "local-expire-value");
             }
         }));
+        /*注册定时刷新缓存策略*/
         localCache.register("local-interval-key", new CachePloy(0, 2, new MissCacheHandler<MyValue>() {
             @Override
             public MyValue getData() {
@@ -43,6 +45,15 @@ public class Main {
         localIntervalMyValue = localCache.get("local-interval-key", MyValue.class);
         System.out.println(localIntervalMyValue.getId());
 
+        /*即时获取缓存*/
+        int myId = 1024;
+        System.out.println(localCache.get("local-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
+            @Override
+            public MyValue getData() {
+                return new MyValue((Integer) this.params, "local-site-value");
+            }
+        }).getId());
+
 
         final AtomicInteger remoteExpireNumber = new AtomicInteger(0);
         final AtomicInteger remoteIntervalNumber = new AtomicInteger(0);
@@ -53,12 +64,14 @@ public class Main {
         jedisPoolConfig.setMaxWaitMillis(1000*5);
         RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6379, 1000*5);
         RemoteCache remoteCache = new RemoteCache(config, remoteCacheInterface);
+        /*注册过期缓存策略*/
         remoteCache.register("remote-expire-key", new CachePloy(10, new MissCacheHandler<MyValue>() {
             @Override
             public MyValue getData() {
                 return new MyValue(remoteExpireNumber.incrementAndGet(), "remote-expire-value");
             }
         }));
+        /*注册定时刷新缓存策略*/
         remoteCache.register("remote-interval-key", new CachePloy(0, 2, new MissCacheHandler<MyValue>() {
             @Override
             public MyValue getData() {
@@ -80,6 +93,14 @@ public class Main {
         Thread.sleep(1000 * 5);
         remoteIntervalMyValue = remoteCache.get("remote-interval-key", MyValue.class);
         System.out.println(remoteIntervalMyValue.getId());
+
+        /*即时获取缓存*/
+        System.out.println(remoteCache.get("remote-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
+            @Override
+            public MyValue getData() {
+                return new MyValue((Integer) this.params, "remote-site-value");
+            }
+        }).getId());
 
     }
 

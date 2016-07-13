@@ -1,7 +1,8 @@
 package com.cache;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 本地缓存
@@ -10,7 +11,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class LocalCache extends AbstractCache{
 
-    private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
+    private Map<String, LocalValue> caches = new HashMap<>();
+
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public LocalCache() {
         super();
@@ -21,13 +24,7 @@ public class LocalCache extends AbstractCache{
     }
 
     @Override
-    public  <T> T set(String key, T value){
-        this.set(key, value, this.config.getDefaultExpireSeconds());
-        return value;
-    }
-
-    @Override
-    public <T> T set(String key, T value, int expireSeconds){
+    protected <T> T set(String key, T value, int expireSeconds){
         LocalValue<T> localValue = new LocalValue<>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
@@ -37,22 +34,42 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T get(String key, Class<T> clazz){
-        return get(key);
+        rwLock.readLock().lock();
+        long currentTimeMillis = System.currentTimeMillis();
+        LocalValue<T> localValue = caches.get(key);
+        rwLock.readLock().unlock();
+        rwLock.writeLock().lock();
+        T result = null;
+        try{
+            if(localValue != null && localValue.expire >= currentTimeMillis){
+                result = localValue.value;
+            }else if(localValue == null || localValue.expire < currentTimeMillis){
+                CachePloy<T> cachePloy = cachePloyRegister.get(key);
+                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+                result = set(key, handler.getData(), cachePloy.getExpireSeconds());
+            }
+        }finally {
+            rwLock.writeLock().unlock();
+        }
+        return result;
     }
 
     @Override
-    public <T> T get(String key){
+    public <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
+        rwLock.readLock().lock();
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
+        rwLock.readLock().unlock();
+        rwLock.writeLock().lock();
         T result = null;
-        if(localValue != null){
-            long expire = localValue.expire;
-            if(expire >= currentTimeMillis){
+        try{
+            if(localValue != null && localValue.expire >= currentTimeMillis){
                 result = localValue.value;
-            }else{
-                CachePloy<T> cachePloy = cachePloyRegister.get(key);
-                result = initExpireCache(key, cachePloy);
+            }else if(localValue == null || localValue.expire < currentTimeMillis){
+                result = set(key, handler.getData(), expireSeconds);
             }
+        }finally {
+            rwLock.writeLock().unlock();
         }
         return result;
     }

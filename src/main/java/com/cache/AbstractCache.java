@@ -79,7 +79,7 @@ public abstract class AbstractCache {
             public void run() {
                 MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
                 T value = handler.getData();
-                set(key, value);
+                set(key, value, config.getDefaultExpireSeconds());
             }
         });
     }
@@ -88,13 +88,11 @@ public abstract class AbstractCache {
         MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
         T value = handler.getData();
         if(cachePloy.getExpireSeconds() <= 0){
-            return set(key, value);
+            return set(key, value, this.config.getDefaultExpireSeconds());
         }else{
             return set(key, value, cachePloy.getExpireSeconds());
         }
     }
-
-    protected abstract  <T> T set(String key, T value);
 
     protected abstract  <T> T set(String key, T value, int expireSeconds);
 
@@ -105,25 +103,5 @@ public abstract class AbstractCache {
      */
     protected abstract  <T> T get(String key, Class<T> clazz);
 
-    /**
-     * 获取注册过的缓存, <T>get(key)调用
-     * @param key 注册过的缓存key
-     * @return
-     */
-    protected abstract  <T> T get(String key);
-
-    /**
-     *
-     * @param key
-     * @param cachePloy
-     * @param <T>
-     * @return
-     */
-    protected <T> T get(String key, CachePloy<T> cachePloy){
-        registerLock.lock();
-        if(!cachePloyRegister.containsKey(key)){
-            initPloy(key, cachePloy);
-        }
-        return get(key);
-    }
+    protected abstract <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler);
 }

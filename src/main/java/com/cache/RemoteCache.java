@@ -22,13 +22,7 @@ public class RemoteCache extends AbstractCache{
     }
 
     @Override
-    public <T> T set(String key, T value) {
-        set(key, value, this.config.getDefaultExpireSeconds());
-        return value;
-    }
-
-    @Override
-    public <T> T set(String key, T value, int expireSeconds) {
+    protected <T> T set(String key, T value, int expireSeconds) {
         String json =JSON.toJSONString(value);
         remoteCacheInterface.set(key, json, expireSeconds);
         return value;
@@ -45,7 +39,11 @@ public class RemoteCache extends AbstractCache{
     }
 
     @Override
-    protected  <T> T get(String key) {
-        return null;
+    public <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
+        String result = remoteCacheInterface.get(key);
+        if(result == null){
+            return set(key, handler.getData(), expireSeconds);
+        }
+        return JSON.parseObject(result, clazz);
     }
 }
