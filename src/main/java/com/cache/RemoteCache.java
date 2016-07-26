@@ -22,7 +22,7 @@ public class RemoteCache extends AbstractCache{
     }
 
     @Override
-    protected <T> T set(String key, T value, int expireSeconds) {
+    public <T> T set(String key, T value, int expireSeconds) {
         String json =JSON.toJSONString(value);
         remoteCacheInterface.set(key, json, expireSeconds);
         return value;

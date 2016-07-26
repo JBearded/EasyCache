@@ -4,7 +4,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 本地缓存
@@ -15,8 +14,6 @@ public class LocalCache extends AbstractCache{
 
     private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
 
-    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-
     public LocalCache() {
         super();
     }
@@ -26,7 +23,7 @@ public class LocalCache extends AbstractCache{
     }
 
     @Override
-    protected <T> T set(String key, T value, int expireSeconds){
+    public <T> T set(String key, T value, int expireSeconds){
         LocalValue<T> localValue = new LocalValue<>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;

@@ -1,10 +1,21 @@
 package com.bean;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * @author 谢俊权
  * @create 2016/7/17 17:58
  */
-public interface BeanFactory {
+public class BeanFactory {
 
-    <T> T set(Class<T> tClass);
+    private static Map<Class<?>, Object> map = new ConcurrentHashMap<>();
+
+    public static <T> void set(T object){
+        map.put(object.getClass(), object);
+    }
+
+    public static <T> T get(Class<T> clazz){
+        return (T) map.get(clazz);
+    }
 }

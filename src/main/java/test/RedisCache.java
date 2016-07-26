@@ -1,3 +1,5 @@
+package test;
+
 import com.cache.RemoteCacheInterface;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;

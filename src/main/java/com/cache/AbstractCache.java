@@ -36,7 +36,7 @@ public abstract class AbstractCache {
      * @param key 缓存key
      * @param cachePloy 缓存策略
      */
-    public <T> void register(String key, CachePloy<T> cachePloy){
+    public <T> void regist(String key, CachePloy<T> cachePloy){
 
         if(registerLock.tryLock()){
             try{
@@ -59,7 +59,7 @@ public abstract class AbstractCache {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                register(key, cachePloy);
+                regist(key, cachePloy);
             }
         }, this.config.getRetryRegisterDelayMillisSecond());
     }
