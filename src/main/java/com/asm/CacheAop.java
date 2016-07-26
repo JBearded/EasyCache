@@ -96,13 +96,11 @@ public class CacheAop {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
             methodVisitor.visitLdcInsn("getUserName");
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 1);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "test/MyValue", "getId", "()Ljava/lang/String;", false);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
-
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false);
             methodVisitor.visitVarInsn(Opcodes.ASTORE, 4);
             Label l1 = new Label();
@@ -131,10 +129,10 @@ public class CacheAop {
             methodVisitor.visitLabel(l5);
             methodVisitor.visitLineNumber(22, l5);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(Opcodes.ILOAD, 1);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
-            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "test/UserService", "getUserName$1", "(Ljava/lang/String;Ljava/lang/String;Ltest/MyValue;)I", false);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "test/UserService", "getUserName$1", "(ILjava/lang/String;Ltest/MyValue;)I", false);
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
             methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
             Label l6 = new Label();
@@ -159,7 +157,7 @@ public class CacheAop {
             Label l8 = new Label();
             methodVisitor.visitLabel(l8);
             methodVisitor.visitLocalVariable("this", "Ltest/UserService;", null, l0, l8, 0);
-            methodVisitor.visitLocalVariable("arg1", "Ljava/lang/String;", null, l0, l8, 1);
+            methodVisitor.visitLocalVariable("arg1", "I", null, l0, l8, 1);
             methodVisitor.visitLocalVariable("arg2", "Ljava/lang/String;", null, l0, l8, 2);
             methodVisitor.visitLocalVariable("myValue", "Ltest/MyValue;", null, l0, l8, 3);
             methodVisitor.visitLocalVariable("key", "Ljava/lang/String;", null, l1, l8, 4);
