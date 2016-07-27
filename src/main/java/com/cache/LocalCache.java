@@ -24,6 +24,7 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
+        System.out.println("cache set");
         LocalValue<T> localValue = new LocalValue<>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
@@ -41,9 +42,12 @@ public class LocalCache extends AbstractCache{
             result = localValue.value;
         }else if(localValue == null || localValue.expire <= currentTimeMillis){
             CachePloy<T> cachePloy = cachePloyRegister.get(key);
-            MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
-            result = set(key, handler.getData(), cachePloy.getExpireSeconds());
+            if(cachePloy != null){
+                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+                result = set(key, handler.getData(), cachePloy.getExpireSeconds());
+            }
         }
+        System.out.println("cache get result: " + result);
         return result;
     }
 

@@ -6,16 +6,16 @@ package test;
  */
 public class MyValue {
 
-    private int id;
+    private Integer id;
     private String name;
 
     public MyValue(){}
-    public MyValue(int id, String name) {
+    public MyValue(Integer id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -23,7 +23,7 @@ public class MyValue {
         this.name = name;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 

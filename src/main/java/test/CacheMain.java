@@ -1,7 +1,11 @@
 package test;
 
-import com.asm.CacheAop;
-import com.cache.*;
+import com.asm.CacheInjector;
+import com.bean.BeanFactory;
+import com.cache.CacheConfig;
+import com.cache.LocalCache;
+import com.cache.RemoteCache;
+import com.cache.RemoteCacheInterface;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -104,28 +108,25 @@ public class CacheMain {
 //        }).getId());
 
 
-//        String desc = "(ZBCIF)Ltest/MyValue;";
-//        String regex = "\\((.*)\\)";
-//        Pattern pattern = Pattern.compile(regex);
-//        Matcher matcher = pattern.matcher(desc);
-//        if(matcher.find()){
-//            desc = matcher.group(1);
-//        }
-//        String[] descs = desc.split(";");
-//        System.out.println(descs.length);
-//        for(int i = 0; i < descs.length; i++){
-//            System.out.println(descs[i]);
-//        }
-//
-//        String jj = "IF";
-//        String[] kk = jj.split("");
-//        System.out.println(kk.length);
-//        System.out.println(kk[0]);
-//        System.out.println(kk[1]);
-//        System.out.println(kk[2]);
+        BeanFactory.set(localCache);
+        BeanFactory.set(remoteCache);
+        BeanFactory.set(new UserService());
+        CacheInjector cacheInjector = new CacheInjector(BeanFactory.class);
+        cacheInjector.run("test");
 
-        CacheAop cacheAop = new CacheAop();
-        cacheAop.run("test");
+//        UserService userService = BeanFactory.get(UserService.class);
+//        int i = userService.getUserName();
+//        System.out.println(i);
+//
+//        Thread.sleep(1000 * 3);
+//
+//        i = userService.getUserName();
+//        System.out.println(i);
+//
+//        Thread.sleep(1000 * 3);
+//
+//        i = userService.getUserName();
+//        System.out.println(i);
 
     }
 }

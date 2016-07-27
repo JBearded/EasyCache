@@ -8,9 +8,8 @@ import com.annotation.LocalCache;
  */
 public class UserService {
 
-    @LocalCache(key="$0$1$2$3.name")
-    private int getUserName(int id, String h, MyValue myValue) {
-        return 1;
+    @LocalCache
+    private String getUserName(int id, String name) {
+        return "welcome "+id+name;
     }
-
 }
