@@ -10,9 +10,24 @@ import java.lang.reflect.Method;
  */
 public class MethodCacheAnnInfo {
 
+    /**
+     * 被注解的方法
+     */
     private Method method;
+
+    /**
+     * 注解方法使用的缓存类型
+     */
     private Class<? extends AbstractCache> cacheClazz;
+
+    /**
+     * 注解方法使用的key
+     */
     private String key;
+
+    /**
+     * 注解方法使用的过期时间
+     */
     private int expireTime;
 
     public MethodCacheAnnInfo() {

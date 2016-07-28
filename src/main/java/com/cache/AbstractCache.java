@@ -14,11 +14,20 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class AbstractCache {
 
+    /**
+     * 定时器, 用于定时刷新缓存
+     */
     protected Scheduler scheduler;
 
+    /**
+     * 缓存服务相关的配置信息
+     */
     protected CacheConfig config;
 
-    protected ConcurrentMap<String, CachePloy> cachePloyRegister = new ConcurrentHashMap<>();
+    /**
+     * 缓存服务的注册数据
+     */
+    protected ConcurrentMap<String, CachePolicy> cachePolicyRegister = new ConcurrentHashMap<>();
 
     private final Lock registerLock = new ReentrantLock();
 
@@ -34,74 +43,105 @@ public abstract class AbstractCache {
     /**
      * 注册缓存key, 设置过期缓存或者定时刷新缓存
      * @param key 缓存key
-     * @param cachePloy 缓存策略
+     * @param cachePolicy 缓存策略
      */
-    public <T> void regist(String key, CachePloy<T> cachePloy){
+    public <T> void register(String key, CachePolicy<T> cachePolicy){
 
         if(registerLock.tryLock()){
             try{
-                if(cachePloyRegister.containsKey(key)){
-                    CachePloy oldCachePloy = cachePloyRegister.remove(key);
-                    if(oldCachePloy.getIntervalSeconds() > 0){
+                if(cachePolicyRegister.containsKey(key)){
+                    CachePolicy oldCachePolicy = cachePolicyRegister.remove(key);
+                    if(oldCachePolicy.isTiming()){
                         scheduler.cancel(key);
                     }
                 }
-                initPloy(key, cachePloy);
+                initPolicy(key, cachePolicy);
             }finally {
                 registerLock.unlock();
             }
         }else{
-            retryRegister(key, cachePloy);
+            retryRegister(key, cachePolicy);
         }
     }
 
-    protected  <T> void retryRegister(final String key, final CachePloy<T> cachePloy){
+    /**
+     * 重新注册缓存key
+     * @param key 缓存key
+     * @param cachePolicy 缓存策略
+     * @param <T>
+     */
+    protected  <T> void retryRegister(final String key, final CachePolicy<T> cachePolicy){
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                regist(key, cachePloy);
+                register(key, cachePolicy);
             }
         }, this.config.getRetryRegisterDelayMillisSecond());
     }
 
-    protected  <T> void initPloy(String key, CachePloy<T> cachePloy){
-        cachePloyRegister.put(key, cachePloy);
-        if(cachePloy.getIntervalSeconds() > 0){
-            initIntervalCache(key, cachePloy);
-        }else{
-            initExpireCache(key, cachePloy);
+    /**
+     * 在注册缓存成功后, 马上获取对应的数据并缓存
+     * @param key   缓存key
+     * @param cachePolicy   缓存策略
+     * @param <T>
+     */
+    protected  <T> void initPolicy(String key, CachePolicy<T> cachePolicy){
+        cachePolicyRegister.put(key, cachePolicy);
+        if(cachePolicy.isTiming()){
+            initIntervalCache(key, cachePolicy);
+        }else if(cachePolicy.isExpired()){
+            initExpiredCache(key, cachePolicy);
         }
     }
 
-    protected <T> void initIntervalCache(final String key, final CachePloy<T> cachePloy){
-        scheduler.run(key, cachePloy.getDelaySeconds(), cachePloy.getIntervalSeconds(), new Runnable() {
+    protected <T> void initIntervalCache(final String key, final CachePolicy<T> cachePolicy){
+        scheduler.run(key, cachePolicy.getDelaySeconds(), cachePolicy.getIntervalSeconds(), new Runnable() {
             @Override
             public void run() {
-                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+                MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
                 T value = handler.getData();
                 set(key, value, config.getDefaultExpireSeconds());
             }
         });
     }
 
-    protected <T> T initExpireCache(String key, CachePloy<T> cachePloy){
-        MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
+    protected <T> T initExpiredCache(String key, CachePolicy<T> cachePolicy){
+        MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
         T value = handler.getData();
-        if(cachePloy.getExpireSeconds() <= 0){
+        if(cachePolicy.getExpireSeconds() <= 0){
             return set(key, value, this.config.getDefaultExpireSeconds());
         }else{
-            return set(key, value, cachePloy.getExpireSeconds());
+            return set(key, value, cachePolicy.getExpireSeconds());
         }
     }
 
-    public abstract  <T> T set(String key, T value, int expireSeconds);
+    /**
+     * 保存数据到缓存中
+     * @param key 缓存key
+     * @param value 缓存数据
+     * @param expiredSeconds 缓存过期时间
+     * @param <T>
+     * @return
+     */
+    public abstract  <T> T set(String key, T value, int expiredSeconds);
 
     /**
-     * 获取注册过的缓存, get(key, T.class)调用
-     * @param key 注册过的缓存key
+     * 获取缓存中的数据
+     * @param key 缓存key
+     * @param clazz 缓存数据类型
+     * @param <T>
      * @return
      */
     public abstract  <T> T get(String key, Class<T> clazz);
 
+    /**
+     * 获取缓存中的数据, 如果没有key对应的数据, 则从handler中获取并存入缓存中
+     * @param key   缓存key
+     * @param expireSeconds 缓存过期时间
+     * @param clazz 缓存数据类型
+     * @param handler   数据源获取类
+     * @param <T>
+     * @return
+     */
     public abstract <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler);
 }

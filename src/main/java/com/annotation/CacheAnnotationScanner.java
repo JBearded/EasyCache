@@ -6,15 +6,21 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 /**
+ * 缓存注解的扫描器
  * @author 谢俊权
  * @create 2016/7/25 10:24
  */
 public class CacheAnnotationScanner {
 
-    public static List<ClassCacheAnnInfo> scan(String pkage){
+    /**
+     * 扫描包名下所有带有缓存注解的类
+     * @param pack 包名
+     * @return 类注解信息列表
+     */
+    public static List<ClassCacheAnnInfo> scan(String pack){
 
         List<ClassCacheAnnInfo> result = new ArrayList<>();
-        Set<Class<?>> classSet = PackageScanner.getClasses(pkage);
+        Set<Class<?>> classSet = PackageScanner.getClasses(pack);
         for(Class<?> clazz : classSet){
             List<MethodCacheAnnInfo> annList = new ArrayList<>();
             for(Method method : clazz.getDeclaredMethods()){

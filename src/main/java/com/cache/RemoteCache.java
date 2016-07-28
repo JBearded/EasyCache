@@ -32,9 +32,9 @@ public class RemoteCache extends AbstractCache{
     public <T> T get(String key, Class<T> clazz) {
         String result = remoteCacheInterface.get(key);
         if(result == null){
-            CachePloy<T> cachePloy = cachePloyRegister.get(key);
-            if(cachePloy != null){
-                return initExpireCache(key, cachePloy);
+            CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
+            if(cachePolicy != null){
+                return initExpiredCache(key, cachePolicy);
             }
         }
         return JSON.parseObject(result, clazz);

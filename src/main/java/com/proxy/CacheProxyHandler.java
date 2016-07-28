@@ -31,7 +31,7 @@ public class CacheProxyHandler implements MethodInterceptor {
         Object result = null;
         MethodCacheAnnInfo methodCacheAnnInfo = getMethodAnnInfo(method);
         if(methodCacheAnnInfo != null){
-            String key = getCacheKey(methodCacheAnnInfo, object, method, args);
+            String key = getCacheKey(methodCacheAnnInfo, args);
             AbstractCache cacheObject = getCacheObject(methodCacheAnnInfo);
             Object value = cacheObject.get(key, method.getReturnType());
             if(value != null){
@@ -49,6 +49,11 @@ public class CacheProxyHandler implements MethodInterceptor {
         return result;
     }
 
+    /**
+     * 从类的多个注解方法中, 获取与调用方法相同的注解信息
+     * @param method 被调用的方法
+     * @return 方法注解信息
+     */
     private MethodCacheAnnInfo getMethodAnnInfo(Method method){
         for(MethodCacheAnnInfo info : classCacheAnnInfo.getMethodAnnInfoList()){
             if(method.equals(info.getMethod())){
@@ -58,9 +63,16 @@ public class CacheProxyHandler implements MethodInterceptor {
         return null;
     }
 
-    private String getCacheKey(MethodCacheAnnInfo info, Object object, Method method, Object[] args){
+    /**
+     * 从注解key中获取到缓存需要的key值
+     * @param info  方法注解信息
+     * @param args  方法参数数组
+     * @return  缓存key
+     */
+    private String getCacheKey(MethodCacheAnnInfo info, Object[] args){
 
         Class<?> clazz = classCacheAnnInfo.getClazz();
+        Method method = info.getMethod();
         String annotationKey = info.getKey();
         String defaultKey = getDefaultKey(clazz, method);
         StringBuilder keyBuilder = new StringBuilder(defaultKey);
@@ -79,23 +91,36 @@ public class CacheProxyHandler implements MethodInterceptor {
                 }else{
                     String fieldName = item.substring(methodIndex + 1);
                     String getMethodName = "get" + fieldName.toUpperCase().substring(0,1) + fieldName.substring(1);
-                    keyValue = getMethodValue(args[paramIndex - 1], getMethodName);
+                    keyValue = getArgMethodValue(args[paramIndex - 1], getMethodName);
                 }
                 if(keyValue != null){
-                    keyBuilder.append(keyValue);
+                    keyBuilder.append("|").append(keyValue);
                 }
             }
         }
         return keyBuilder.toString();
     }
 
+    /**
+     * 获取默认的缓存key, 不管注解key如何, 都会有默认ClassName + | + MethodName的key值
+     * @param clazz 具有注解方法的类
+     * @param method    注解方法
+     * @return  默认缓存key
+     */
     private String getDefaultKey(Class<?> clazz, Method method){
-        String objectName = clazz.getName().replace(".", "");
+        String objectName = clazz.getName().replace(".", "|");
         String methodName = method.getName();
-        return objectName + methodName;
+        return objectName +"|"+ methodName;
     }
 
-    private Object getMethodValue(Object object, String getMethodName) {
+
+    /**
+     * 获取参数bean的属性值. 如果参数是一个bean, 那么通过此方法反射调用其属性值
+     * @param object    参数bean对象
+     * @param getMethodName 参数bean的getter方法名称
+     * @return
+     */
+    private Object getArgMethodValue(Object object, String getMethodName) {
 
         Object value = null;
         try{
@@ -108,6 +133,11 @@ public class CacheProxyHandler implements MethodInterceptor {
         return value;
     }
 
+    /**
+     * 从Bean容器中获取相对应的缓存实例, LocalCache或者RemoteCache实例
+     * @param info  方法注解信息
+     * @return
+     */
     private AbstractCache getCacheObject(MethodCacheAnnInfo info){
         Class<? extends AbstractCache> cacheClazz = info.getCacheClazz();
         AbstractCache cacehObject = beanFactory.get(cacheClazz);

@@ -24,7 +24,7 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
-        System.out.println("cache set value: "+value);
+        System.out.println("cache set key: " + key + " value: "+value);
         LocalValue<T> localValue = new LocalValue<>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
@@ -41,13 +41,13 @@ public class LocalCache extends AbstractCache{
         if(localValue != null && localValue.expire > currentTimeMillis){
             result = localValue.value;
         }else if(localValue == null || localValue.expire <= currentTimeMillis){
-            CachePloy<T> cachePloy = cachePloyRegister.get(key);
-            if(cachePloy != null){
-                MissCacheHandler<T> handler = cachePloy.getMissCacheHandler();
-                result = set(key, handler.getData(), cachePloy.getExpireSeconds());
+            CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
+            if(cachePolicy != null){
+                MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
+                result = set(key, handler.getData(), cachePolicy.getExpireSeconds());
             }
         }
-        System.out.println("cache get result: " + result);
+        System.out.println("cache get key: " + key + " result: " + result);
         return result;
     }
 
@@ -65,6 +65,9 @@ public class LocalCache extends AbstractCache{
         return result;
     }
 
+    /**
+     * 启动定时清除本地缓存数据, 每天零点启动清除
+     */
     public void clearScheduler(){
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());

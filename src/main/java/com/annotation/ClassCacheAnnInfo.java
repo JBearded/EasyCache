@@ -8,7 +8,14 @@ import java.util.List;
  */
 public class ClassCacheAnnInfo {
 
+    /**
+     * 带有缓存注解的类
+     */
     private Class<?> clazz;
+
+    /**
+     * 方法注解信息列表
+     */
     private List<MethodCacheAnnInfo> methodAnnInfoList;
 
 
