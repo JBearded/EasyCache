@@ -6,6 +6,9 @@
 > localCache.set("easyCache-local-user", userInfo, 60);  
 > UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);  
 
+本地缓存为了避免长期大量占用内存, 可以调用定时零点清除缓存的操作
+> localCache.clearScheduler();
+
 下面是远程缓存的基本用法
 首先需要实现RemoteCacheInterface的接口, 用于远程缓存的存储和获取
 > JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
