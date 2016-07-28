@@ -11,7 +11,7 @@ public class BeanClassLoader extends ClassLoader{
     private final Map<String, byte[]> injectClassCode;
 
     public BeanClassLoader(Map<String, byte[]> injectClassCode) {
-        super();
+        super(Thread.currentThread().getContextClassLoader());
         this.injectClassCode = injectClassCode;
     }
 
@@ -19,7 +19,7 @@ public class BeanClassLoader extends ClassLoader{
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         byte[] code = injectClassCode.get(name);
         if(code != null){
-            return defineClass(null, code, 0, code.length);
+            return super.defineClass(name, code, 0, code.length);
         }
         return super.loadClass(name);
     }

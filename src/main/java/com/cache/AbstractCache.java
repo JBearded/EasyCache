@@ -94,14 +94,14 @@ public abstract class AbstractCache {
         }
     }
 
-    protected abstract  <T> T set(String key, T value, int expireSeconds);
+    public abstract  <T> T set(String key, T value, int expireSeconds);
 
     /**
      * 获取注册过的缓存, get(key, T.class)调用
      * @param key 注册过的缓存key
      * @return
      */
-    protected abstract  <T> T get(String key, Class<T> clazz);
+    public abstract  <T> T get(String key, Class<T> clazz);
 
-    protected abstract <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler);
+    public abstract <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler);
 }

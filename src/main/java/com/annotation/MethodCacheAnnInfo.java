@@ -1,36 +1,28 @@
 package com.annotation;
 
+import com.cache.AbstractCache;
+
 import java.lang.reflect.Method;
 
 /**
  * @author 谢俊权
  * @create 2016/7/25 16:56
  */
-public class CacheAnnotationInfo {
+public class MethodCacheAnnInfo {
 
-    private Class<?> clazz;
     private Method method;
-    private Class<?> cacheClazz;
+    private Class<? extends AbstractCache> cacheClazz;
     private String key;
     private int expireTime;
 
-    public CacheAnnotationInfo() {
+    public MethodCacheAnnInfo() {
     }
 
-    public CacheAnnotationInfo(Class<?> clazz, Method method, Class<?> cacheClazz, String key, int expireTime) {
-        this.clazz = clazz;
+    public MethodCacheAnnInfo(Method method, Class<? extends AbstractCache> cacheClazz, String key, int expireTime) {
         this.method = method;
         this.cacheClazz = cacheClazz;
         this.key = key;
         this.expireTime = expireTime;
-    }
-
-    public Class<?> getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(Class<?> clazz) {
-        this.clazz = clazz;
     }
 
     public Method getMethod() {
@@ -41,11 +33,11 @@ public class CacheAnnotationInfo {
         this.method = method;
     }
 
-    public Class<?> getCacheClazz() {
+    public Class<? extends AbstractCache> getCacheClazz() {
         return cacheClazz;
     }
 
-    public void setCacheClazz(Class<?> cacheClazz) {
+    public void setCacheClazz(Class<? extends AbstractCache> cacheClazz) {
         this.cacheClazz = cacheClazz;
     }
 

@@ -3,9 +3,7 @@ package com.annotation;
 import com.utils.PackageScanner;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author 谢俊权
@@ -13,30 +11,33 @@ import java.util.Set;
  */
 public class CacheAnnotationScanner {
 
-    public static Map<String, CacheAnnotationInfo> scan(String pkage){
+    public static List<ClassCacheAnnInfo> scan(String pkage){
 
-        Map<String, CacheAnnotationInfo> result = new HashMap<>();
+        List<ClassCacheAnnInfo> result = new ArrayList<>();
         Set<Class<?>> classSet = PackageScanner.getClasses(pkage);
         for(Class<?> clazz : classSet){
+            List<MethodCacheAnnInfo> annList = new ArrayList<>();
             for(Method method : clazz.getDeclaredMethods()){
                 LocalCache localCacheAn = method.getAnnotation(LocalCache.class);
                 RemoteCache remoteCacheAn = method.getAnnotation(RemoteCache.class);
                 if(localCacheAn != null || remoteCacheAn != null){
-                    CacheAnnotationInfo info = new CacheAnnotationInfo();
-                    info.setClazz(clazz);
-                    info.setMethod(method);
+                    MethodCacheAnnInfo annInfo = new MethodCacheAnnInfo();
+                    annInfo.setMethod(method);
                     if(localCacheAn != null){
-                        info.setCacheClazz(com.cache.LocalCache.class);
-                        info.setKey(localCacheAn.key());
-                        info.setExpireTime(localCacheAn.expire());
+                        annInfo.setCacheClazz(com.cache.LocalCache.class);
+                        annInfo.setKey(localCacheAn.key());
+                        annInfo.setExpireTime(localCacheAn.expire());
                     }else if(remoteCacheAn != null){
-                        info.setCacheClazz(com.cache.RemoteCache.class);
-                        info.setKey(remoteCacheAn.key());
-                        info.setExpireTime(remoteCacheAn.expire());
+                        annInfo.setCacheClazz(com.cache.RemoteCache.class);
+                        annInfo.setKey(remoteCacheAn.key());
+                        annInfo.setExpireTime(remoteCacheAn.expire());
                     }
-                    String key = clazz.getName() + "." + method.getName();
-                    result.put(key, info);
+                    annList.add(annInfo);
                 }
+            }
+            if(!annList.isEmpty()){
+                ClassCacheAnnInfo classAnnInfo = new ClassCacheAnnInfo(clazz, annList);
+                result.add(classAnnInfo);
             }
         }
         return result;

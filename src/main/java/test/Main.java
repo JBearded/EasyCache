@@ -1,11 +1,11 @@
 package test;
 
-import com.asm.CacheInjector;
-import com.bean.BeanFactory;
+import com.bean.CacheBeanFactory;
 import com.cache.CacheConfig;
 import com.cache.LocalCache;
 import com.cache.RemoteCache;
 import com.cache.RemoteCacheInterface;
+import com.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author 谢俊权
  * @create 2016/7/9 18:54
  */
-public class CacheMain {
+public class Main {
 
     public static void main(String[] args) throws Exception {
 
@@ -108,25 +108,31 @@ public class CacheMain {
 //        }).getId());
 
 
-        BeanFactory.set(localCache);
-        BeanFactory.set(remoteCache);
-        BeanFactory.set(new UserService());
-        CacheInjector cacheInjector = new CacheInjector(BeanFactory.class);
-        cacheInjector.run("test");
+        CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
+        cacheBeanFactory.set(localCache.getClass(), localCache);
+        cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
+        CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
+        cacheInterceptor.run("test");
 
-//        UserService userService = BeanFactory.get(UserService.class);
-//        int i = userService.getUserName();
-//        System.out.println(i);
-//
-//        Thread.sleep(1000 * 3);
-//
-//        i = userService.getUserName();
-//        System.out.println(i);
-//
-//        Thread.sleep(1000 * 3);
-//
-//        i = userService.getUserName();
-//        System.out.println(i);
+        UserService userService = cacheBeanFactory.get(UserService.class);
+        String i = userService.getUserName(1);
+        System.out.println(i);
+        Thread.sleep(1000 * 1);
+        i = userService.getUserName(1);
+        System.out.println(i);
+        Thread.sleep(1000 * 1);
+        i = userService.getUserName(3);
+        System.out.println(i);
+
+        boolean successful = userService.login(new UserInfo(1, "123"));
+        System.out.println(successful);
+        Thread.sleep(1000 * 1);
+        successful = userService.login(new UserInfo(1, "123"));
+        System.out.println(successful);
+        Thread.sleep(1000 * 1);
+        successful = userService.login(new UserInfo(2, "234"));
+        System.out.println(successful);
+        Thread.sleep(1000 * 1);
 
     }
 }
