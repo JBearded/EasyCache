@@ -1,4 +1,4 @@
-package com.cache;
+package com.utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,19 +26,19 @@ public class SegmentLock {
         }
     }
 
-    public <T> void lock(T key){
+    public void lock(Object key){
         int index = getKeyIndex(key);
         ReentrantLock lock = lockMap.get(index);
         lock.lock();
     }
 
-    public <T> void unlock(T key){
+    public void unlock(Object key){
         int index = getKeyIndex(key);
         ReentrantLock lock = lockMap.get(index);
         lock.unlock();
     }
 
-    private <T> int getKeyIndex(T key){
+    private int getKeyIndex(Object key){
         return (key.hashCode() >>> 1) % segments;    //无符号右移一位变整数
     }
 }

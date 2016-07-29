@@ -1,5 +1,7 @@
 package com.cache;
 
+import com.utils.HashLock;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +24,7 @@ public abstract class AbstractCache {
     /**
      * 分段锁
      */
-    protected SegmentLock segmentLock;
+    protected HashLock hashLock;
 
     /**
      * 缓存服务相关的配置信息
@@ -43,7 +45,7 @@ public abstract class AbstractCache {
     public AbstractCache(CacheConfig config) {
         this.cacheConfig = config;
         this.scheduler = new Scheduler(this.cacheConfig.getSchedulerCorePoolSize());
-        this.segmentLock = new SegmentLock(this.cacheConfig.getLockSegments(), this.cacheConfig.isLockIsFair());
+        this.hashLock = new HashLock(this.cacheConfig.getLockSegments(), this.cacheConfig.isLockIsFair());
     }
 
     /**
