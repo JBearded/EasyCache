@@ -15,7 +15,13 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        CacheConfig config = new CacheConfig(60*60, 32, 2000);
+        CacheConfig config = new CacheConfig.Builder()
+                .defaultExpiredSeconds(60)
+                .schedulerCorePoolSize(64)
+                .retryRegisterMSeconds(500)
+                .lockSegments(32)
+                .lockIsFair(false)
+                .build();
 
         final AtomicInteger localExpireNumber = new AtomicInteger(0);
         final AtomicInteger localIntervalNumber = new AtomicInteger(0);

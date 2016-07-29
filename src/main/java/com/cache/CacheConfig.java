@@ -7,66 +7,89 @@ package com.cache;
  */
 public class CacheConfig {
 
-    private int defaultExpireSeconds = 60 * 60 * 24;
+    private int defaultExpiredSeconds = 60 * 60 * 24;
 
     private int schedulerCorePoolSize = 64;
 
-    private int retryRegisterDelayMillisSecond = 1000 * 2;
+    private int retryRegisterMSeconds = 1000 * 2;
 
-    public CacheConfig() {
+    private int lockSegments = 16;
+
+    private boolean lockIsFair = false;
+
+    private CacheConfig(Builder builder) {
+        this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
+        this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
+        this.retryRegisterMSeconds = builder.retryRegisterMSeconds;
+        this.lockSegments = builder.lockSegments;
+        this.lockIsFair = builder.lockIsFair;
     }
 
-    public CacheConfig(int defaultExpireSeconds, int schedulerCorePoolSize, int retryRegisterDelayMillisSecond) {
-        this.defaultExpireSeconds = defaultExpireSeconds;
-        this.schedulerCorePoolSize = schedulerCorePoolSize;
-        this.retryRegisterDelayMillisSecond = retryRegisterDelayMillisSecond;
+    public int getDefaultExpiredSeconds() {
+        return defaultExpiredSeconds;
     }
 
-    /**
-     * 获取默认的缓存过期时间
-     * @return
-     */
-    public int getDefaultExpireSeconds() {
-        return defaultExpireSeconds;
-    }
-
-    /**
-     * 设置默认的缓存过期时间
-     * @param defaultExpireSeconds
-     */
-    public void setDefaultExpireSeconds(int defaultExpireSeconds) {
-        this.defaultExpireSeconds = defaultExpireSeconds;
-    }
-
-    /**
-     * 获取定时器的线程池数量
-     * @return
-     */
     public int getSchedulerCorePoolSize() {
         return schedulerCorePoolSize;
     }
 
-    /**
-     * 设置定时器的线程池数量
-     * @param schedulerCorePoolSize
-     */
-    public void setSchedulerCorePoolSize(int schedulerCorePoolSize) {
-        this.schedulerCorePoolSize = schedulerCorePoolSize;
+    public int getRetryRegisterMSeconds() {
+        return retryRegisterMSeconds;
     }
 
-    /**
-     * 获取重新注册缓存策略的延迟时间
-     * @return
-     */
-    public int getRetryRegisterDelayMillisSecond() {
-        return retryRegisterDelayMillisSecond;
+    public int getLockSegments() {
+        return lockSegments;
     }
 
-    /**
-     * 设置重新注册缓存策略的延迟时间
-     * @param retryRegisterDelayMillisSecond
-     */
-    public void setRetryRegisterDelayMillisSecond(int retryRegisterDelayMillisSecond) {
-        this.retryRegisterDelayMillisSecond = retryRegisterDelayMillisSecond;
+    public boolean isLockIsFair() {
+        return lockIsFair;
     }
+
+    public static class Builder{
+
+        private int defaultExpiredSeconds = 60 * 60 * 24;
+
+        private int schedulerCorePoolSize = 64;
+
+        private int retryRegisterMSeconds = 1000 * 2;
+
+        private int lockSegments = 16;
+
+        private boolean lockIsFair = false;
+
+
+        public Builder() {
+        }
+
+        public Builder defaultExpiredSeconds(int expiredSeconds){
+            this.defaultExpiredSeconds = expiredSeconds;
+            return this;
+        }
+
+        public Builder schedulerCorePoolSize(int schedulerCorePoolSize){
+            this.schedulerCorePoolSize = schedulerCorePoolSize;
+            return this;
+        }
+
+        public Builder retryRegisterMSeconds(int retryRegisterMSeconds){
+            this.retryRegisterMSeconds = retryRegisterMSeconds;
+            return this;
+        }
+
+        public Builder lockSegments(int lockSegments){
+            this.lockSegments = lockSegments;
+            return this;
+        }
+
+        public Builder lockIsFair(boolean lockIsFair){
+            this.lockIsFair = lockIsFair;
+            return this;
+        }
+
+        public CacheConfig build(){
+            return new CacheConfig(this);
+        }
+
+    }
+
 }

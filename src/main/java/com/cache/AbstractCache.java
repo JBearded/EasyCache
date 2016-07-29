@@ -20,9 +20,14 @@ public abstract class AbstractCache {
     protected Scheduler scheduler;
 
     /**
+     * 分段锁
+     */
+    protected SegmentLock segmentLock;
+
+    /**
      * 缓存服务相关的配置信息
      */
-    protected CacheConfig config;
+    protected CacheConfig cacheConfig;
 
     /**
      * 缓存服务的注册数据
@@ -32,12 +37,13 @@ public abstract class AbstractCache {
     private final Lock registerLock = new ReentrantLock();
 
     public AbstractCache() {
-        this(new CacheConfig());
+        this(new CacheConfig.Builder().build());
     }
 
     public AbstractCache(CacheConfig config) {
-        this.config = config;
-        this.scheduler = new Scheduler(this.config.getSchedulerCorePoolSize());
+        this.cacheConfig = config;
+        this.scheduler = new Scheduler(this.cacheConfig.getSchedulerCorePoolSize());
+        this.segmentLock = new SegmentLock(this.cacheConfig.getLockSegments(), this.cacheConfig.isLockIsFair());
     }
 
     /**
@@ -76,7 +82,7 @@ public abstract class AbstractCache {
             public void run() {
                 register(key, cachePolicy);
             }
-        }, this.config.getRetryRegisterDelayMillisSecond());
+        }, cacheConfig.getRetryRegisterMSeconds());
     }
 
     /**
@@ -100,7 +106,7 @@ public abstract class AbstractCache {
             public void run() {
                 MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
                 T value = handler.getData();
-                set(key, value, config.getDefaultExpireSeconds());
+                set(key, value, cacheConfig.getDefaultExpiredSeconds());
             }
         });
     }
@@ -109,7 +115,7 @@ public abstract class AbstractCache {
         MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
         T value = handler.getData();
         if(cachePolicy.getExpireSeconds() <= 0){
-            return set(key, value, this.config.getDefaultExpireSeconds());
+            return set(key, value, this.cacheConfig.getDefaultExpiredSeconds());
         }else{
             return set(key, value, cachePolicy.getExpireSeconds());
         }
