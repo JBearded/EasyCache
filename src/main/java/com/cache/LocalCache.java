@@ -38,14 +38,14 @@ public class LocalCache extends AbstractCache{
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
         T result = null;
-        if(localValue != null && localValue.expire > currentTimeMillis){
-            result = localValue.value;
-        }else if(localValue == null || localValue.expire <= currentTimeMillis){
+        if(localValue == null || localValue.expire <= currentTimeMillis){
             CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
             if(cachePolicy != null){
                 MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
                 result = set(key, handler.getData(), cachePolicy.getExpireSeconds());
             }
+        }else if(localValue != null && localValue.expire > currentTimeMillis){
+            result = localValue.value;
         }
         System.out.println("cache get key: " + key + " result: " + result);
         return result;
@@ -57,10 +57,10 @@ public class LocalCache extends AbstractCache{
         long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
         T result = null;
-        if(localValue != null && localValue.expire >= currentTimeMillis){
-            result = localValue.value;
-        }else if(localValue == null || localValue.expire < currentTimeMillis){
+        if(localValue == null || localValue.expire < currentTimeMillis){
             result = set(key, handler.getData(), expireSeconds);
+        }else if(localValue != null && localValue.expire >= currentTimeMillis){
+            result = localValue.value;
         }
         return result;
     }
