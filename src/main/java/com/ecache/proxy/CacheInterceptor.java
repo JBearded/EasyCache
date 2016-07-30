@@ -1,9 +1,9 @@
-package com.proxy;
+package com.ecache.proxy;
 
-import com.annotation.CacheAnnotationScanner;
-import com.annotation.ClassCacheAnnInfo;
-import com.bean.BeanFactoryInterface;
-import com.bean.InjectorInterface;
+import com.ecache.annotation.CacheAnnotationScanner;
+import com.ecache.annotation.ClassCacheAnnInfo;
+import com.ecache.bean.BeanFactoryInterface;
+import com.ecache.bean.InjectorInterface;
 import net.sf.cglib.proxy.Enhancer;
 
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.utils;
+package com.ecache.utils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

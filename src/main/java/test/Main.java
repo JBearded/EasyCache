@@ -1,8 +1,8 @@
 package test;
 
-import com.bean.CacheBeanFactory;
-import com.cache.*;
-import com.proxy.CacheInterceptor;
+import com.ecache.*;
+import com.ecache.bean.CacheBeanFactory;
+import com.ecache.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.concurrent.atomic.AtomicInteger;

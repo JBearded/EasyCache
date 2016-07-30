@@ -1,6 +1,6 @@
-package com.annotation;
+package com.ecache.annotation;
 
-import com.utils.PackageScanner;
+import com.ecache.utils.PackageScanner;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -30,12 +30,12 @@ public class CacheAnnotationScanner {
                     MethodCacheAnnInfo annInfo = new MethodCacheAnnInfo();
                     annInfo.setMethod(method);
                     if(localCacheAn != null){
-                        annInfo.setCacheClazz(com.cache.LocalCache.class);
+                        annInfo.setCacheClazz(com.ecache.LocalCache.class);
                         annInfo.setKey(localCacheAn.key());
                         annInfo.setExpiredSeconds(localCacheAn.expire());
                         annInfo.setAvoidOverload(localCacheAn.avoidOverload());
                     }else if(remoteCacheAn != null){
-                        annInfo.setCacheClazz(com.cache.RemoteCache.class);
+                        annInfo.setCacheClazz(com.ecache.RemoteCache.class);
                         annInfo.setKey(remoteCacheAn.key());
                         annInfo.setExpiredSeconds(remoteCacheAn.expire());
                         annInfo.setAvoidOverload(remoteCacheAn.avoidOverload());

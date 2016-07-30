@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 /**
  * 缓存策略

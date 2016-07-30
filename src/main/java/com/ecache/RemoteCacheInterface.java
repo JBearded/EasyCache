@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 /**
  * 远程缓存接口, 提供给各种缓存实现

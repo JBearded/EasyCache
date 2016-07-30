@@ -1,6 +1,6 @@
-package com.cache;
+package com.ecache;
 
-import com.utils.HashLock;
+import com.ecache.utils.HashLock;
 
 import java.util.Timer;
 import java.util.TimerTask;

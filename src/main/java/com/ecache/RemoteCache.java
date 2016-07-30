@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 import com.alibaba.fastjson.JSON;
 

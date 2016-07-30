@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

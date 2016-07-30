@@ -1,6 +1,6 @@
-package com.annotation;
+package com.ecache.annotation;
 
-import com.cache.AbstractCache;
+import com.ecache.AbstractCache;
 
 import java.lang.reflect.Method;
 

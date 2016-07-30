@@ -1,4 +1,4 @@
-package com.utils;
+package com.ecache.utils;
 
 import java.util.HashMap;
 import java.util.Map;

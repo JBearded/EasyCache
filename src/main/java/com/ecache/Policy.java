@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 /**
  * @author 谢俊权

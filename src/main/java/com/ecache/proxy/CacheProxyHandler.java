@@ -1,9 +1,9 @@
-package com.proxy;
+package com.ecache.proxy;
 
-import com.annotation.ClassCacheAnnInfo;
-import com.annotation.MethodCacheAnnInfo;
-import com.bean.BeanFactoryInterface;
-import com.cache.AbstractCache;
+import com.ecache.annotation.ClassCacheAnnInfo;
+import com.ecache.annotation.MethodCacheAnnInfo;
+import com.ecache.bean.BeanFactoryInterface;
+import com.ecache.AbstractCache;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 

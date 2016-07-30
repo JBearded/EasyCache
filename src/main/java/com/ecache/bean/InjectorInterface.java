@@ -1,4 +1,4 @@
-package com.bean;
+package com.ecache.bean;
 
 /**
  * @author 谢俊权

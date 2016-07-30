@@ -1,6 +1,6 @@
 package test;
 
-import com.annotation.LocalCache;
+import com.ecache.annotation.LocalCache;
 
 import java.util.HashMap;
 import java.util.Map;

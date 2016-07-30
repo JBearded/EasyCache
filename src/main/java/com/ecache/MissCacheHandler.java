@@ -1,4 +1,4 @@
-package com.cache;
+package com.ecache;
 
 /**
  * 没有命中缓存时, 获取数据源的处理器
