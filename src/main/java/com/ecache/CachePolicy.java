@@ -10,7 +10,7 @@ public class CachePolicy<T> {
     /**
      * 缓存过期时间, 用于过期缓存策略
      */
-    private int expireSeconds;
+    private int expiredSeconds;
 
     /**
      * 延迟时间, 用于定时刷新缓存策略
@@ -35,11 +35,11 @@ public class CachePolicy<T> {
 
     /**
      * 过期缓存策略
-     * @param expireSeconds 缓存过期时间
+     * @param expiredSeconds 缓存过期时间
      * @param handler   数据源获取的处理器
      */
-    public CachePolicy(int expireSeconds, MissCacheHandler<T> handler){
-        this.expireSeconds = expireSeconds;
+    public CachePolicy(int expiredSeconds, MissCacheHandler<T> handler){
+        this.expiredSeconds = expiredSeconds;
         this.missCacheHandler = handler;
         this.policy = Policy.Expired;
     }
@@ -57,8 +57,8 @@ public class CachePolicy<T> {
         this.policy = Policy.Timing;
     }
 
-    public int getExpireSeconds() {
-        return expireSeconds;
+    public int getExpiredSeconds() {
+        return expiredSeconds;
     }
 
     public int getIntervalSeconds() {

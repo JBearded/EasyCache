@@ -7,7 +7,7 @@ package com.ecache;
  */
 public interface RemoteCacheInterface {
 
-    void set(String key, String value, int expireSeconds);
+    void set(String key, String value, int expiredSeconds);
 
     String get(String key);
 }

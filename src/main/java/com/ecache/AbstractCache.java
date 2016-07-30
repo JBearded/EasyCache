@@ -119,10 +119,10 @@ public abstract class AbstractCache {
     protected <T> T initExpiredCache(String key, CachePolicy<T> cachePolicy){
         MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
         T value = handler.getData();
-        if(cachePolicy.getExpireSeconds() <= 0){
+        if(cachePolicy.getExpiredSeconds() <= 0){
             return set(key, value, this.cacheConfig.getDefaultExpiredSeconds());
         }else{
-            return set(key, value, cachePolicy.getExpireSeconds());
+            return set(key, value, cachePolicy.getExpiredSeconds());
         }
     }
 
@@ -154,18 +154,18 @@ public abstract class AbstractCache {
     public <T> T get(String key, Class<T> clazz){
         CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
         MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
-        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpireSeconds();
+        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpiredSeconds();
         return get(key, expiredSeconds, clazz, handler);
     }
 
     /**
      * 获取缓存中的数据, 如果没有key对应的数据, 则从handler中获取并存入缓存中
      * @param key   缓存key
-     * @param expireSeconds 缓存过期时间
+     * @param expiredSeconds 缓存过期时间
      * @param clazz 缓存数据类型
      * @param handler   数据源获取类
      * @param <T>
      * @return
      */
-    public abstract <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler);
+    public abstract <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler);
 }

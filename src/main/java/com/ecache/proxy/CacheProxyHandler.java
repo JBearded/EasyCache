@@ -42,8 +42,8 @@ public class CacheProxyHandler implements MethodInterceptor {
                         if(value == null){
                             result = methodProxy.invokeSuper(object, args);
                             if(result != null){
-                                int expireSeconds = methodCacheAnnInfo.getExpiredSeconds();
-                                cacheObject.set(key, result, expireSeconds);
+                                int expiredSeconds = methodCacheAnnInfo.getExpiredSeconds();
+                                cacheObject.set(key, result, expiredSeconds);
                             }
                         }else {
                             result = value;
@@ -54,8 +54,8 @@ public class CacheProxyHandler implements MethodInterceptor {
                 }else{
                     result = methodProxy.invokeSuper(object, args);
                     if(result != null){
-                        int expireSeconds = methodCacheAnnInfo.getExpiredSeconds();
-                        cacheObject.set(key, result, expireSeconds);
+                        int expiredSeconds = methodCacheAnnInfo.getExpiredSeconds();
+                        cacheObject.set(key, result, expiredSeconds);
                     }
                 }
             }else {
