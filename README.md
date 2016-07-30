@@ -4,7 +4,7 @@
 下面是本地缓存的基本用法
 > LocalCache localCache = new LocalCache();  
 > localCache.set("easyCache-local-user", userInfo, 60);  
-> UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);  
+> UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);
 
 本地缓存为了避免长期大量占用内存, 可以调用定时零点清除缓存的操作
 > localCache.clearScheduler();
@@ -23,14 +23,25 @@
 > UserInfo userInfo = remoteCache.get("easyCache-remote-user", UserInfo.class);
 
 在构造本地缓存或者远程缓存时, 还可以传入一个配置参数
-> CacheConfig config = new CacheConfig(60*60, 32, 2000);
-> LocalCache localCache = new LocalCache(config);
+
+> CacheConfig config = new CacheConfig.Builder()
+> &ensp;                  .defaultExpiredSeconds(60)
+> &ensp;                  .schedulerCorePoolSize(64)
+> &ensp;                  .retryRegisterMSeconds(500)
+> &ensp;                  .lockSegments(32)
+> &ensp;                  .lockIsFair(false)
+> &ensp;                  .avoidServerOverload(true)
+> &ensp;                  .build();
 
 这个配置中, 包括了几个参数和默认值
 
-* defaultExpireSeconds = 60 * 60 * 24;  //默认缓存过期的时间
+* defaultExpiredSeconds = 60 * 60 * 24;  //默认缓存过期的时间
 * schedulerCorePoolSize = 64;   //定时器的线程池大小
-* retryRegisterDelayMillisSecond = 1000 * 2;    //注册失败后, 延迟多久后再重新注册
+* retryRegisterMSeconds = 1000 * 2;    //注册失败后, 延迟多久后再重新注册
+* lockSegments = 32;    //分段锁的段数
+* lockIsFair = false;   //是否公平锁
+* avoidServerOverload = false;  //是否避免数据服务器过载
+
 
 ## 缓存策略
 如果在应用中需要定时刷新数据源到缓存中, 在EasyCache中支持两种缓存策略, 其中就有定时刷新策略. 下面以本地缓存作为例子
@@ -41,7 +52,8 @@
 > &emsp;    }  
 > }));  
 
-以上就注册了定时刷新缓存的策略, 我们只需要在使用到`easyCache-local-timing-user`这个key的地方, 获取数据就可以了. 
+以上就注册了定时刷新缓存的策略, 我们只需要在使用到`easyCache-local-timing-user`这个key的地方, 获取数据就可以了.
+
 > UserInfo userInfo = localCache.get("easyCache-local-timing-user", UserInfo.class);
 
 还有一种策略是过期策略, 就是如果缓存有数据就返回, 没有缓存数据就获取源数据并存入缓存
@@ -116,6 +128,13 @@ CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 
 > UserService userService = cacheBeanFactory.get(UserService.class);
 > String i = userService.getUserName(3);
 > boolean successful = userService.login(new UserInfo(123, "helloworld"));
+
+## 避免数据服务器过载
+在使用了缓存的应用中, 可能会出现相同key在高并发中都没有命中缓存的情况, 那么这时候每个请求都会从数据源服务端中获取新的数据下来.
+为了避免每个线程都重新从数据源服务端中获取一次数据, EasyCache做了这样的缓存处理, 如果发现没有命中缓存, 就会启用双重检查的加锁机制.
+这保证只有第一个拿到锁的线程会从数据源服务端中获取数据并放入缓存中, 后面进来的线程还是会重新从缓存中获取数据.虽然这样做减轻了数据源服务端
+的访问压力, 但是会对缓存服务做两次get操作. 所以这需要使用者来决定是减轻数据源服务端还是缓存服务的压力.这个参数可以在CacheConfig
+中设置, 参数名为avoidServerOverload, 默认是false, 即关闭了这个机制.
 
 
 
