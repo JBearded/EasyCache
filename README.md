@@ -108,7 +108,7 @@
 为了更方便使用缓存, EasyCache支持了缓存注解的方式来做方法缓存. 先看一下例子
 
 `UserService.java`  
-> @LocalCache(key="$1", expire = 5)  
+> @LocalCache(key="$1", expire = 5, avoidOverload = true)
 
 > public String getUserName(int id) {  
 
@@ -116,7 +116,7 @@
 
 > }  
 
-> @LocalCache(key="$1.id$1.pword", expire = 5)  
+> @LocalCache(key="$1.id$1.pword", expire = 5, avoidOverload = true)
 
 > public boolean login(UserInfo info){  
 
@@ -189,8 +189,9 @@ CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 
 ## 避免数据服务器过载
 在使用了缓存的应用中, 可能会出现相同key在高并发中都没有命中缓存的情况, 那么这时候每个请求都会从数据源服务端中获取新的数据下来.
 为了避免每个线程都重新从数据源服务端中获取一次数据, EasyCache做了这样的缓存处理, 如果发现没有命中缓存, 就会启用双重检查的加锁机制.
-这保证只有第一个拿到锁的线程会从数据源服务端中获取数据并放入缓存中,后面进来的线程还是会重新从缓存中获取数据.虽然这样做减轻了数据源服务端的访问压力, 但是会对缓存服务做两次get操作. 所以这需要使用者来决定是减轻数据源服务端还是缓存服务的压力.这个参数可以在CacheConfig
-中设置, 参数名为avoidServerOverload, 默认是false, 即关闭了这个机制.
+这保证只有第一个拿到锁的线程会从数据源服务端中获取数据并放入缓存中,后面进来的线程还是会重新从缓存中获取数据.虽然这样做减轻了数据源服务端的访问压力,
+但是会对缓存服务做两次get操作. 所以这需要使用者来决定是减轻数据源服务端还是缓存服务的压力.这个参数可以在CacheConfig
+中设置, 参数名为avoidServerOverload,也在可以在方法注解中设置这个参数,默认都是false, 即关闭了这个机制.
 有人可能担心锁是否影响了EasyCache的缓存访问性能, 是的, 加锁确实会影响性能. 但是这个锁是细颗粒度的, 它不会影响不同key的访问, 只会阻塞相同key在线程并发下的get访问. 
 
 
