@@ -28,16 +28,19 @@ public class MethodCacheAnnInfo {
     /**
      * 注解方法使用的过期时间
      */
-    private int expireTime;
+    private int expiredSeconds;
+
+    private boolean avoidOverload;
 
     public MethodCacheAnnInfo() {
     }
 
-    public MethodCacheAnnInfo(Method method, Class<? extends AbstractCache> cacheClazz, String key, int expireTime) {
+    public MethodCacheAnnInfo(Method method, Class<? extends AbstractCache> cacheClazz, String key, int expiredSeconds, boolean avoidOverload) {
         this.method = method;
         this.cacheClazz = cacheClazz;
         this.key = key;
-        this.expireTime = expireTime;
+        this.expiredSeconds = expiredSeconds;
+        this.avoidOverload = avoidOverload;
     }
 
     public Method getMethod() {
@@ -64,11 +67,19 @@ public class MethodCacheAnnInfo {
         this.key = key;
     }
 
-    public int getExpireTime() {
-        return expireTime;
+    public int getExpiredSeconds() {
+        return expiredSeconds;
     }
 
-    public void setExpireTime(int expireTime) {
-        this.expireTime = expireTime;
+    public void setExpiredSeconds(int expiredSeconds) {
+        this.expiredSeconds = expiredSeconds;
+    }
+
+    public boolean isAvoidOverload() {
+        return avoidOverload;
+    }
+
+    public void setAvoidOverload(boolean avoidOverload) {
+        this.avoidOverload = avoidOverload;
     }
 }

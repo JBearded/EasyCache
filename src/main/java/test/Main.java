@@ -21,6 +21,7 @@ public class Main {
                 .retryRegisterMSeconds(500)
                 .lockSegments(32)
                 .lockIsFair(false)
+                .avoidServerOverload(true)
                 .build();
 
         final AtomicInteger localExpireNumber = new AtomicInteger(0);

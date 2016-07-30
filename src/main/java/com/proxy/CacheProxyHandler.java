@@ -34,14 +34,32 @@ public class CacheProxyHandler implements MethodInterceptor {
             String key = getCacheKey(methodCacheAnnInfo, args);
             AbstractCache cacheObject = getCacheObject(methodCacheAnnInfo);
             Object value = cacheObject.get(key, method.getReturnType());
-            if(value != null){
-                result = value;
-            }else{
-                result = methodProxy.invokeSuper(object, args);
-                if(result != null){
-                    int expireSeconds = methodCacheAnnInfo.getExpireTime();
-                    cacheObject.set(key, result, expireSeconds);
+            if(value == null){
+                if(methodCacheAnnInfo.isAvoidOverload()){
+                    cacheObject.lock(key);
+                    try{
+                        value = cacheObject.get(key, method.getReturnType());
+                        if(value == null){
+                            result = methodProxy.invokeSuper(object, args);
+                            if(result != null){
+                                int expireSeconds = methodCacheAnnInfo.getExpiredSeconds();
+                                cacheObject.set(key, result, expireSeconds);
+                            }
+                        }else {
+                            result = value;
+                        }
+                    }finally {
+                        cacheObject.unlock(key);
+                    }
+                }else{
+                    result = methodProxy.invokeSuper(object, args);
+                    if(result != null){
+                        int expireSeconds = methodCacheAnnInfo.getExpiredSeconds();
+                        cacheObject.set(key, result, expireSeconds);
+                    }
                 }
+            }else {
+                result = value;
             }
         }else{
             result = methodProxy.invokeSuper(object, args);

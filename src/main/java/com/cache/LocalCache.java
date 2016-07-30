@@ -33,34 +33,31 @@ public class LocalCache extends AbstractCache{
     }
 
     @Override
-    public <T> T get(String key, Class<T> clazz){
+    public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
 
-        long currentTimeMillis = System.currentTimeMillis();
         LocalValue<T> localValue = caches.get(key);
-        T result = null;
-        if(localValue == null || localValue.expire <= currentTimeMillis){
-            CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
-            if(cachePolicy != null){
-                MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
-                result = set(key, handler.getData(), cachePolicy.getExpireSeconds());
+        T result = (localValue == null) ? null : localValue.value;
+        if(handler != null){
+            long currentTimeMillis = System.currentTimeMillis();
+            if(localValue == null || localValue.expire < currentTimeMillis){
+                if(cacheConfig.isAvoidServerOverload()){
+                    lock(key);
+                    try{
+                        localValue = caches.get(key);
+                        if(localValue == null || localValue.expire < currentTimeMillis){
+                            result = set(key, handler.getData(), expiredSeconds);
+                        }else{
+                            result = localValue.value;
+                        }
+                    }finally {
+                        unlock(key);
+                    }
+                }else{
+                    result = set(key, handler.getData(), expiredSeconds);
+                }
+            }else if(localValue != null && localValue.expire >= currentTimeMillis){
+                result = localValue.value;
             }
-        }else if(localValue != null && localValue.expire > currentTimeMillis){
-            result = localValue.value;
-        }
-        System.out.println("cache get key: " + key + " result: " + result);
-        return result;
-    }
-
-    @Override
-    public <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
-
-        long currentTimeMillis = System.currentTimeMillis();
-        LocalValue<T> localValue = caches.get(key);
-        T result = null;
-        if(localValue == null || localValue.expire < currentTimeMillis){
-            result = set(key, handler.getData(), expireSeconds);
-        }else if(localValue != null && localValue.expire >= currentTimeMillis){
-            result = localValue.value;
         }
         return result;
     }

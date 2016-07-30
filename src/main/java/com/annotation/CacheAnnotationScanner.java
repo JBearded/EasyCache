@@ -32,11 +32,13 @@ public class CacheAnnotationScanner {
                     if(localCacheAn != null){
                         annInfo.setCacheClazz(com.cache.LocalCache.class);
                         annInfo.setKey(localCacheAn.key());
-                        annInfo.setExpireTime(localCacheAn.expire());
+                        annInfo.setExpiredSeconds(localCacheAn.expire());
+                        annInfo.setAvoidOverload(localCacheAn.avoidOverload());
                     }else if(remoteCacheAn != null){
                         annInfo.setCacheClazz(com.cache.RemoteCache.class);
                         annInfo.setKey(remoteCacheAn.key());
-                        annInfo.setExpireTime(remoteCacheAn.expire());
+                        annInfo.setExpiredSeconds(remoteCacheAn.expire());
+                        annInfo.setAvoidOverload(remoteCacheAn.avoidOverload());
                     }
                     annList.add(annInfo);
                 }

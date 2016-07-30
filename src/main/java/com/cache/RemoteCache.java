@@ -29,22 +29,24 @@ public class RemoteCache extends AbstractCache{
     }
 
     @Override
-    public <T> T get(String key, Class<T> clazz) {
-        String result = remoteCacheInterface.get(key);
-        if(result == null){
-            CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
-            if(cachePolicy != null){
-                return initExpiredCache(key, cachePolicy);
-            }
-        }
-        return JSON.parseObject(result, clazz);
-    }
-
-    @Override
     public <T> T get(String key, int expireSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
         String result = remoteCacheInterface.get(key);
-        if(result == null){
-            return set(key, handler.getData(), expireSeconds);
+        if(handler != null){
+            if(result == null){
+                if(cacheConfig.isAvoidServerOverload()){
+                    lock(key);
+                    try{
+                        result = remoteCacheInterface.get(key);
+                        if(result == null){
+                            return set(key, handler.getData(), expireSeconds);
+                        }
+                    }finally {
+                        unlock(key);
+                    }
+                }else{
+                    return set(key, handler.getData(), expireSeconds);
+                }
+            }
         }
         return JSON.parseObject(result, clazz);
     }

@@ -17,12 +17,15 @@ public class CacheConfig {
 
     private boolean lockIsFair = false;
 
+    private boolean avoidServerOverload = false;
+
     private CacheConfig(Builder builder) {
         this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
         this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
         this.retryRegisterMSeconds = builder.retryRegisterMSeconds;
         this.lockSegments = builder.lockSegments;
         this.lockIsFair = builder.lockIsFair;
+        this.avoidServerOverload = builder.avoidServerOverload;
     }
 
     public int getDefaultExpiredSeconds() {
@@ -45,6 +48,10 @@ public class CacheConfig {
         return lockIsFair;
     }
 
+    public boolean isAvoidServerOverload() {
+        return avoidServerOverload;
+    }
+
     public static class Builder{
 
         private int defaultExpiredSeconds = 60 * 60 * 24;
@@ -56,6 +63,8 @@ public class CacheConfig {
         private int lockSegments = 16;
 
         private boolean lockIsFair = false;
+
+        private boolean avoidServerOverload = false;
 
 
         public Builder() {
@@ -83,6 +92,11 @@ public class CacheConfig {
 
         public Builder lockIsFair(boolean lockIsFair){
             this.lockIsFair = lockIsFair;
+            return this;
+        }
+
+        public Builder avoidServerOverload(boolean avoidServerOverload){
+            this.avoidServerOverload = avoidServerOverload;
             return this;
         }
 

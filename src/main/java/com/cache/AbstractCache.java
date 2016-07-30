@@ -123,6 +123,14 @@ public abstract class AbstractCache {
         }
     }
 
+    public void lock(Object key){
+        hashLock.lock(key);
+    }
+
+    public void unlock(Object key){
+        hashLock.unlock(key);
+    }
+
     /**
      * 保存数据到缓存中
      * @param key 缓存key
@@ -140,7 +148,12 @@ public abstract class AbstractCache {
      * @param <T>
      * @return
      */
-    public abstract  <T> T get(String key, Class<T> clazz);
+    public <T> T get(String key, Class<T> clazz){
+        CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
+        MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
+        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpireSeconds();
+        return get(key, expiredSeconds, clazz, handler);
+    }
 
     /**
      * 获取缓存中的数据, 如果没有key对应的数据, 则从handler中获取并存入缓存中

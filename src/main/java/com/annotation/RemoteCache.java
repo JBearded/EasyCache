@@ -16,4 +16,6 @@ public @interface RemoteCache {
    String key() default "$0";
 
    int expire() default 300;
+
+   boolean avoidOverload() default false;
 }
