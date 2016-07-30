@@ -17,22 +17,21 @@ import java.util.Map;
  */
 public class CacheInterceptor {
 
+    /**
+     * Bean工厂接口, 用于外部加载代理的缓存bean
+     */
     private BeanFactoryInterface beanFactory;
-    private InjectorInterface injectorInterface;
 
     /**
-     *
-     * @param beanFactory Bean容器接口, 用于将代理类存入其中
+     * Bean注入器接口, 用于外部给代理的缓存bean注入其他容器中的属性
      */
+    private InjectorInterface injectorInterface;
+
+
     public CacheInterceptor(BeanFactoryInterface beanFactory) {
         this.beanFactory = beanFactory;
     }
 
-    /**
-     *
-     * @param beanFactory   Bean容器接口, 用于将代理类存入其中
-     * @param injectorInterface 注入接口, 用于对代理类注入属性值
-     */
     public CacheInterceptor(BeanFactoryInterface beanFactory, InjectorInterface injectorInterface) {
         this.beanFactory = beanFactory;
         this.injectorInterface = injectorInterface;
@@ -68,6 +67,10 @@ public class CacheInterceptor {
         return result;
     }
 
+    /**
+     * 如果有传入注入器类, 则进行代理类的属性注入
+     * @param proxyBeanMap
+     */
     private void inject(Map<Class<?>, Object> proxyBeanMap){
         if(injectorInterface != null){
             Iterator<Class<?>> it = proxyBeanMap.keySet().iterator();

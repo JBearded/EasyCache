@@ -24,7 +24,6 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
-        System.out.println("cache set key: " + key + " value: "+value);
         LocalValue<T> localValue = new LocalValue<>();
         localValue.value = value;
         localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;

@@ -50,10 +50,10 @@ public class PackageScanner {
     /**
      * 以文件的形式来获取包下的所有Class
      *
-     * @param packageName
-     * @param packagePath
-     * @param recursive
-     * @param classes
+     * @param packageName   包名
+     * @param packagePath   包路径
+     * @param recursive 是否扫描子目录
+     * @param classes   返回的所有扫描类
      */
     private static void findAndAddClassesInPackageByFile(String packageName,
                                                         String packagePath, final boolean recursive, Set<Class<?>> classes) {

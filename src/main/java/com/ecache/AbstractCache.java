@@ -22,7 +22,7 @@ public abstract class AbstractCache {
     protected Scheduler scheduler;
 
     /**
-     * 分段锁
+     * 哈希锁, 每个key都有对应的一个锁
      */
     protected HashLock hashLock;
 
@@ -36,6 +36,9 @@ public abstract class AbstractCache {
      */
     protected ConcurrentMap<String, CachePolicy> cachePolicyRegister = new ConcurrentHashMap<>();
 
+    /**
+     * 注册锁
+     */
     private final Lock registerLock = new ReentrantLock();
 
     public AbstractCache() {

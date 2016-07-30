@@ -7,14 +7,29 @@ package com.ecache;
  */
 public class CachePolicy<T> {
 
+    /**
+     * 缓存过期时间, 用于过期缓存策略
+     */
     private int expireSeconds;
 
+    /**
+     * 延迟时间, 用于定时刷新缓存策略
+     */
     private int delaySeconds;
 
+    /**
+     * 间隔时间, 用于定时刷新缓存策略
+     */
     private int intervalSeconds;
 
+    /**
+     * 数据源获取处理器
+     */
     private MissCacheHandler<T> missCacheHandler;
 
+    /**
+     * 缓存的策略, Timing或者Expired
+     */
     private Policy policy;
 
 
