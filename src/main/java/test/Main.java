@@ -5,6 +5,9 @@ import com.ecache.bean.CacheBeanFactory;
 import com.ecache.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -21,13 +24,29 @@ public class Main {
                 .retryRegisterMSeconds(500)
                 .lockSegments(32)
                 .lockIsFair(false)
-                .avoidServerOverload(true)
+                .avoidServerOverload(false)
                 .build();
+
+        LocalCache localCache = new LocalCache(config);
+
+        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+        jedisPoolConfig.setMaxTotal(100);
+        jedisPoolConfig.setMaxIdle(20);
+        jedisPoolConfig.setMinIdle(20);
+        jedisPoolConfig.setMaxWaitMillis(1000*5);
+        RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+        RemoteCache remoteCache = new RemoteCache(config, remoteCacheInterface);
+
+//        registerTest(remoteCache, localCache);
+//        annotationTest(remoteCache, localCache);
+        threadTest(remoteCache, localCache);
+
+    }
+
+    public static void registerTest(RemoteCache remoteCache, LocalCache localCache) throws Exception{
 
         final AtomicInteger localExpireNumber = new AtomicInteger(0);
         final AtomicInteger localIntervalNumber = new AtomicInteger(0);
-        LocalCache localCache = new LocalCache(config);
-
         localCache.clearScheduler();
         /*注册过期缓存策略*/
         localCache.register("local-expire-key", new CachePolicy(10, new MissCacheHandler<MyValue>() {
@@ -65,15 +84,9 @@ public class Main {
         }).getId());
 
 
+
         final AtomicInteger remoteExpireNumber = new AtomicInteger(0);
         final AtomicInteger remoteIntervalNumber = new AtomicInteger(0);
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(100);
-        jedisPoolConfig.setMaxIdle(20);
-        jedisPoolConfig.setMinIdle(20);
-        jedisPoolConfig.setMaxWaitMillis(1000*5);
-        RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-        RemoteCache remoteCache = new RemoteCache(config, remoteCacheInterface);
         /*注册过期缓存策略*/
         remoteCache.register("remote-expire-key", new CachePolicy<MyValue>(10, new MissCacheHandler<MyValue>() {
             @Override
@@ -111,8 +124,9 @@ public class Main {
                 return new MyValue((Integer) this.params, "remote-site-value");
             }
         }).getId());
+    }
 
-
+    public static void annotationTest(RemoteCache remoteCache, LocalCache localCache) throws Exception{
         CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
         cacheBeanFactory.set(localCache.getClass(), localCache);
         cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
@@ -138,6 +152,39 @@ public class Main {
         successful = userService.login(new UserInfo(2, "234"));
         System.out.println(successful);
         Thread.sleep(1000 * 1);
+    }
+
+    public static void threadTest(RemoteCache remoteCache, final LocalCache localCache) throws Exception {
+
+        final AtomicInteger dbNumber = new AtomicInteger(0);
+        localCache.register("ecache-thread-key", new CachePolicy(2, new MissCacheHandler<String>() {
+            @Override
+            public String getData() {
+                System.out.println(dbNumber.incrementAndGet() +" : "+ Thread.currentThread().getName()+": get data from db");
+                return "hello";
+            }
+        }));
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        final CountDownLatch begin = new CountDownLatch(1);
+        for (int i = 0; i < 1000; i++) {
+            if (i != 0 && i % 100 == 0) {
+                begin.countDown();
+                Thread.sleep(2000);
+                System.out.println("--------------------------------------------------");
+            }
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        begin.await();
+                        localCache.get("ecache-thread-key", String.class);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+        executorService.shutdown();
     }
 
     static class MyValue{
