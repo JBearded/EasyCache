@@ -35,27 +35,25 @@ public class LocalCache extends AbstractCache{
     public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
 
         LocalValue<T> localValue = caches.get(key);
-        T result = (localValue == null) ? null : localValue.value;
+        long currentTimeMillis = System.currentTimeMillis();
+        T result = (localValue == null || localValue.expire < currentTimeMillis) ? null : localValue.value;
         if(handler != null){
-            long currentTimeMillis = System.currentTimeMillis();
-            if(localValue == null || localValue.expire < currentTimeMillis){
-                if(cacheConfig.isAvoidServerOverload()){
+            if(result == null) {
+                if (cacheConfig.isAvoidServerOverload()) {
                     lock(key);
-                    try{
+                    try {
                         localValue = caches.get(key);
-                        if(localValue == null || localValue.expire < currentTimeMillis){
+                        if (localValue == null || localValue.expire < currentTimeMillis) {
                             result = set(key, handler.getData(), expiredSeconds);
-                        }else{
+                        } else {
                             result = localValue.value;
                         }
-                    }finally {
+                    } finally {
                         unlock(key);
                     }
-                }else{
+                } else {
                     result = set(key, handler.getData(), expiredSeconds);
                 }
-            }else if(localValue != null && localValue.expire >= currentTimeMillis){
-                result = localValue.value;
             }
         }
         return result;
