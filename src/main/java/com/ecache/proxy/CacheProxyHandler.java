@@ -37,7 +37,6 @@ public class CacheProxyHandler implements MethodInterceptor {
         if(methodCacheAnnInfo != null){
             String key = getCacheKey(methodCacheAnnInfo, args);
             AbstractCache cacheObject = getCacheObject(methodCacheAnnInfo);
-            method.getGenericReturnType();
             Object value = getCacheValue(cacheObject, key, method);
             if(value == null){
                 if(methodCacheAnnInfo.isAvoidOverload()){
