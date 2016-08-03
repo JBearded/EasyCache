@@ -28,8 +28,19 @@ public class RemoteCache extends AbstractCache{
         return value;
     }
 
+    public <T> T get(String key, RemoteCacheType type){
+        CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
+        MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
+        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpiredSeconds();
+        return get(key, expiredSeconds, type, handler);
+    }
+
     @Override
     public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
+        return get(key, expiredSeconds, new RemoteCacheType<T>(){}, handler);
+    }
+
+    public <T> T get(String key, int expiredSeconds, RemoteCacheType type, MissCacheHandler<T> handler) {
         String result = remoteCacheInterface.get(key);
         if(handler != null){
             if(result == null){
@@ -48,6 +59,6 @@ public class RemoteCache extends AbstractCache{
                 }
             }
         }
-        return JSON.parseObject(result, clazz);
+        return JSON.parseObject(result, type.type);
     }
 }

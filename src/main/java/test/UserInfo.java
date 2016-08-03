@@ -10,6 +10,9 @@ public class UserInfo {
     private String name;
     private String pword;
 
+    public UserInfo() {
+    }
+
     public UserInfo(int id, String pword) {
         this.id = id;
         this.pword = pword;
@@ -31,5 +34,17 @@ public class UserInfo {
 
     public String getPword() {
         return pword;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPword(String pword) {
+        this.pword = pword;
     }
 }

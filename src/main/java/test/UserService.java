@@ -18,7 +18,7 @@ public class UserService {
         userMap.put(3, new UserInfo(3, "quan", "345"));
     }
 
-    @LocalCache(key="$1", expire = 5, avoidOverload = true)
+    @LocalCache(key="$1", expire = 5)
     public String getUserName(int id) {
         UserInfo user = userMap.get(id);
         if(user != null){
@@ -27,7 +27,7 @@ public class UserService {
         return null;
     }
 
-    @LocalCache(key="$1.id$1.pword", expire = 5, avoidOverload = true)
+    @LocalCache(key="$1.id$1.pword", expire = 5)
     public boolean login(UserInfo info){
         boolean successful = false;
         int id = info.getId();

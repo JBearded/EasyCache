@@ -1,13 +1,17 @@
 package com.ecache.proxy;
 
+import com.ecache.AbstractCache;
+import com.ecache.RemoteCache;
+import com.ecache.RemoteCacheType;
 import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
-import com.ecache.AbstractCache;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +37,8 @@ public class CacheProxyHandler implements MethodInterceptor {
         if(methodCacheAnnInfo != null){
             String key = getCacheKey(methodCacheAnnInfo, args);
             AbstractCache cacheObject = getCacheObject(methodCacheAnnInfo);
-            Object value = cacheObject.get(key, method.getReturnType());
+            method.getGenericReturnType();
+            Object value = getCacheValue(cacheObject, key, method);
             if(value == null){
                 if(methodCacheAnnInfo.isAvoidOverload()){
                     cacheObject.lock(key);
@@ -160,5 +165,23 @@ public class CacheProxyHandler implements MethodInterceptor {
         Class<? extends AbstractCache> cacheClazz = info.getCacheClazz();
         AbstractCache cacehObject = beanFactory.get(cacheClazz);
         return cacehObject;
+    }
+
+    /**
+     * 根据不同的缓存实例, 对获取数据进行处理
+     * @param cacheObject   缓存实例
+     * @param key   缓存key
+     * @param method    缓存方法
+     * @return
+     */
+    private Object getCacheValue(AbstractCache cacheObject, String key, Method method){
+        Type type = method.getGenericReturnType();
+        if(type instanceof ParameterizedType && cacheObject instanceof RemoteCache){
+            RemoteCache remoteCache = (RemoteCache) cacheObject;
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            return remoteCache.get(key, new RemoteCacheType(parameterizedType){});
+        }else{
+            return cacheObject.get(key, method.getReturnType());
+        }
     }
 }

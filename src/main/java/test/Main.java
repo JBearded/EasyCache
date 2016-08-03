@@ -5,6 +5,9 @@ import com.ecache.bean.CacheBeanFactory;
 import com.ecache.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +42,17 @@ public class Main {
 
 //        registerTest(remoteCache, localCache);
 //        annotationTest(remoteCache, localCache);
-        threadTest(remoteCache, localCache);
+//        threadTest(remoteCache, localCache);
+        Map<Integer, Object> value = new HashMap<>();
+        value.put(1, new UserInfo(1, "123", "a"));
+        remoteCache.set("ok", value, 60*5);
+        Map<Integer, UserInfo> cacheValue = remoteCache.get("ok", new RemoteCacheType<Map<Integer, UserInfo>>(){});
+        Iterator it = cacheValue.keySet().iterator();
+        while(it.hasNext()){
+            Object key = it.next();
+            UserInfo userInfo = cacheValue.get(key);
+            System.out.println(userInfo.getId());
+        }
 
     }
 

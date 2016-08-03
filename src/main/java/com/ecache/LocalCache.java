@@ -24,37 +24,35 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
-        LocalValue<T> localValue = new LocalValue<>();
-        localValue.value = value;
-        localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
-        caches.put(key, localValue);
+        lock(key);
+        try{
+            LocalValue<T> localValue = new LocalValue<>();
+            localValue.value = value;
+            localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
+            caches.put(key, localValue);
+        }finally {
+            unlock(key);
+        }
         return value;
     }
 
     @Override
     public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
 
-        LocalValue<T> localValue = caches.get(key);
-        long currentTimeMillis = System.currentTimeMillis();
-        T result = (localValue == null || localValue.expire < currentTimeMillis) ? null : localValue.value;
-        if(handler != null){
-            if(result == null) {
-                if (cacheConfig.isAvoidServerOverload()) {
-                    lock(key);
-                    try {
-                        localValue = caches.get(key);
-                        if (localValue == null || localValue.expire < currentTimeMillis) {
-                            result = set(key, handler.getData(), expiredSeconds);
-                        } else {
-                            result = localValue.value;
-                        }
-                    } finally {
-                        unlock(key);
-                    }
-                } else {
+        lock(key);
+        T result = null;
+        try{
+            LocalValue<T> localValue = caches.get(key);
+            long currentTimeMillis = System.currentTimeMillis();
+            result = (localValue == null || localValue.expire < currentTimeMillis) ? null : localValue.value;
+            if(result == null){
+                caches.remove(key);
+                if(handler != null){
                     result = set(key, handler.getData(), expiredSeconds);
                 }
             }
+        }finally {
+            unlock(key);
         }
         return result;
     }

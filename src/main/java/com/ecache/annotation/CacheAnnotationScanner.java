@@ -33,7 +33,7 @@ public class CacheAnnotationScanner {
                         annInfo.setCacheClazz(com.ecache.LocalCache.class);
                         annInfo.setKey(localCacheAn.key());
                         annInfo.setExpiredSeconds(localCacheAn.expire());
-                        annInfo.setAvoidOverload(localCacheAn.avoidOverload());
+                        annInfo.setAvoidOverload(false);
                     }else if(remoteCacheAn != null){
                         annInfo.setCacheClazz(com.ecache.RemoteCache.class);
                         annInfo.setKey(remoteCacheAn.key());
