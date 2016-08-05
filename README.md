@@ -3,53 +3,38 @@
 ## 本地缓存和远程缓存
 下面是本地缓存的基本用法
 
-> LocalCache localCache = new LocalCache();  
-
-> localCache.set("easyCache-local-user", userInfo, 60);  
-
-> UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);
+    LocalCache localCache = new LocalCache();
+    localCache.set("easyCache-local-user", userInfo, 60);
+    UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);
 
 本地缓存为了避免长期大量占用内存, 可以调用定时零点清除缓存的操作
-> localCache.clearScheduler();
+    localCache.clearScheduler();
 
 下面是远程缓存的基本用法
 首先需要实现RemoteCacheInterface的接口, 用于远程缓存的存储和获取
-> JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
 
-> jedisPoolConfig.setMaxTotal(100);
+    JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+    jedisPoolConfig.setMaxTotal(100);
+    jedisPoolConfig.setMaxIdle(20);
+    jedisPoolConfig.setMinIdle(20);
+    jedisPoolConfig.setMaxWaitMillis(1000*5);
+    RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
 
-> jedisPoolConfig.setMaxIdle(20);
-
-> jedisPoolConfig.setMinIdle(20);
-
-> jedisPoolConfig.setMaxWaitMillis(1000*5);
-
-> RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-
-> RemoteCache remoteCache = new RemoteCache(remoteCacheInterface);
-> 
-> remoteCache.set("easyCache-remote-user", userInfo, 60);
-
-> UserInfo userInfo = remoteCache.get("easyCache-remote-user", UserInfo.class);
+    RemoteCache remoteCache = new RemoteCache(remoteCacheInterface);
+    remoteCache.set("easyCache-remote-user", userInfo, 60);
+    UserInfo userInfo = remoteCache.get("easyCache-remote-user", UserInfo.class);
 
 
 在构造本地缓存或者远程缓存时, 还可以传入一个配置参数
 
-> CacheConfig config = new CacheConfig.Builder()  
-
-> &ensp;  .defaultExpiredSeconds(60)  
-
-> &ensp;  .schedulerCorePoolSize(64)  
-
-> &ensp;  .retryRegisterMSeconds(500)  
-
-> &ensp;  .lockSegments(32)  
-
-> &ensp;  .lockIsFair(false)  
-
-> &ensp;  .avoidServerOverload(true)  
-
-> &ensp;  .build();  
+    CacheConfig config = new CacheConfig.Builder()
+        .defaultExpiredSeconds(60)
+        .schedulerCorePoolSize(64)
+        .retryRegisterMSeconds(500)
+        .lockSegments(32)
+        .lockIsFair(false)
+        .avoidServerOverload(true)
+        .build();
 
 这个配置中, 包括了几个参数和默认值
 
@@ -63,128 +48,171 @@
 
 ## 缓存策略
 如果在应用中需要定时刷新数据源到缓存中, 在EasyCache中支持两种缓存策略, 其中就有定时刷新策略. 下面以本地缓存作为例子
-> localCache.register("easyCache-local-timing-user", new CachePolicy(delaySeconds, intervalSeconds, new MissCacheHandler<UserInfo>(){
 
-> &ensp;    @Override  
-
-> &emsp;    public UserInfo getData() {  
-
-> &emsp;&emsp;  return doSomthing();  
-
-> &emsp;    }  
-> }));  
+    localCache.register("easyCache-local-timing-user", new CachePolicy(delaySeconds, intervalSeconds, new MissCacheHandler<UserInfo>(){
+        @Override
+        public UserInfo getData() {
+            return doSomething();
+        }
+    }));
 
 以上就注册了定时刷新缓存的策略, 我们只需要在使用到`easyCache-local-timing-user`这个key的地方, 获取数据就可以了.
 
-> UserInfo userInfo = localCache.get("easyCache-local-timing-user", UserInfo.class);
+    UserInfo userInfo = localCache.get("easyCache-local-timing-user", UserInfo.class);
 
 还有一种策略是过期策略, 就是如果缓存有数据就返回, 没有缓存数据就获取源数据并存入缓存
-> localCache.register("easyCache-local-expired-user", new CachePolicy(expiredSeconds, new  MissCacheHandler<UserInfo>(){  
 
-> &ensp;    @Override  
-
-> &emsp;    public UserInfo getData() {  
-
-> &emsp;&emsp;  return doSomthing();  
-
-> &emsp;    }  
-
-> }));  
+    localCache.register("easyCache-local-expired-user", new CachePolicy(expiredSeconds, new  MissCacheHandler<UserInfo>(){
+        @Override
+        public UserInfo getData() {
+            return doSomthing();
+        }
+    }));
 
 如果需要传参, 可以在MissCacheHandler构造函数中传入
-> localCache.register("easyCache-local-expired-user", new CachePolicy(expiredSeconds, new  MissCacheHandler<UserInfo>(params){  
 
-> &ensp;    @Override  
-
-> &emsp;    public UserInfo getData() {  
-
-> &emsp;&emsp;  return doSomthing(params);  
-
-> &emsp;    }  
-
-> }));    
+    localCache.register("easyCache-local-expired-user", new CachePolicy(expiredSeconds, new  MissCacheHandler<UserInfo>(params){
+        @Override
+        public UserInfo getData() {
+            return doSomthing(params);
+        }
+    }));
 
 ## 缓存注解
-为了更方便使用缓存, EasyCache支持了缓存注解的方式来做方法缓存. 先看一下例子
+为了更方便使用缓存, EasyCache支持了缓存注解的方式来做方法缓存. 先看一下例子`UserService.java`
 
-`UserService.java`  
-> @LocalCache(key="$1", expire = 5, avoidOverload = true)
+    @Cache(instance = RedisCache.class, key="$1", expire = 5)
+    public String getUserName(int id) {
+        return doSomething(id);
+    }
 
-> public String getUserName(int id) {  
+    @LocalCache(key="$1.id$1.pword", expire = 5)
+    public boolean login(UserInfo info){
+        return doSomething(id);
+    }
 
-> &ensp;    return doSomething(id);  
+    @RemoteCache(key="$1", expire = 5, avoidOverload = true)
+    public boolean getUser(int id){
+        return doSomething(id);
+    }
 
-> }  
+@Cache注解用于自定义的缓存实例，需要实现CacheInterface的接口。而@RemoteCache的缓存实现也要实现CacheInterface的接口。
+@LocalCache则是本地缓存，已经有了内置实现。在key注解参数中，$1表示第一个参数值, 以此类推, $10表示第10个参数。
+而$1.name表示第一个参数的name属性值. 最终缓存的key为: key = 类名 + 方法名 + 各种参数值($1$3.name$4等等)
 
-> @LocalCache(key="$1.id$1.pword", expire = 5, avoidOverload = true)
+在使用远程缓存或者自定义缓存注解之前，需要先实现CacheInterface的接口
 
-> public boolean login(UserInfo info){  
+    public class RedisCache implements CacheInterface {
 
-> &ensp;    return doSomething(id);  
+        private JedisPool jedisPool;
 
-> }  
+        public RedisCache(JedisPoolConfig config, String ip, int port, int timeout) {
+            this.jedisPool = new JedisPool(config, ip, port, timeout);
+        }
 
-其中$1表示第一个参数值, 以此类推, $10表示第10个参数.而$1.name表示第一个参数的name属性值. 最终缓存的key为:  
-key = 类名 + 方法名 + 各种参数值($1$3.name$4等等)
+        @Override
+        public void set(String key, String value, int expireSeconds) {
+            Jedis jedis = null;
+            try{
+                jedis = jedisPool.getResource();
+                jedis.setex(key, expireSeconds, value);
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                if(jedis != null){
+                    jedis.close();
+                }
+            }
+        }
 
-> CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
+        @Override
+        public String get(String key) {
+            Jedis jedis = null;
+            try{
+                jedis = jedisPool.getResource();
+                return jedis.get(key);
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                if(jedis != null){
+                    jedis.close();
+                }
+            }
+            return null;
+        }
+    }
 
-> cacheBeanFactory.set(localCache.getClass(), localCache);
+然后我们就可以做初始化工作了
 
-> cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
+    CacheConfig config = new CacheConfig.Builder()
+            .defaultExpiredSeconds(60)
+            .schedulerCorePoolSize(64)
+            .retryRegisterMSeconds(500)
+            .lockSegments(32)
+            .lockIsFair(false)
+            .avoidServerOverload(false)
+            .build();
 
-> CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
+    LocalCache localCache = new LocalCache(config);
 
-> cacheInterceptor.run("com.test");
->
-> UserService userService = cacheBeanFactory.get(UserService.class);
+    JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+    jedisPoolConfig.setMaxTotal(100);
+    jedisPoolConfig.setMaxIdle(20);
+    jedisPoolConfig.setMinIdle(20);
+    jedisPoolConfig.setMaxWaitMillis(1000*5);
+    RedisCache redisCache = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+    RemoteCache remoteCache = new RemoteCache(config, redisCache);
 
-> String i = userService.getUserName(3);
+    CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
+    cacheBeanFactory.set(localCache.getClass(), localCache);
+    cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
+    cacheBeanFactory.set(redisCache.getClass(), redisCache);
 
-> boolean successful = userService.login(new UserInfo(123, "helloworld"));
+    CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
+    cacheInterceptor.run("com.test");
+
+    UserService userService = cacheBeanFactory.get(UserService.class);
+    String i = userService.getUserName(3);
+    boolean successful = userService.login(new UserInfo(123, "helloworld"));
 
 以上从Bean容器获取的UserService实例在调用getUserName和login方法时, 会先获取缓存数据, 如果没有则会直接调用方法获取源数据, 并保存到缓存中. 
 CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 并生成相应的代理缓存类, 最后覆盖掉在Bean容器中原来的类. 
 
 如果你需要把EasyCache的注解功能用到自己的应用中, 你需要实现BeanFactoryInterface接口, 用于保存和获取在你的应用的Bean实例.如下.
 
-> public class YourCacheBeanFactory implements BeanFactoryInterface{
->
-> @Override
+    public class YourCacheBeanFactory implements BeanFactoryInterface{
+        @Override
+        public <T> void set(Class<?> clazz, T object) {
+            YourBeanFactory.set(clazz, object);
+        }
 
-> public <T> void set(Class<?> clazz, T object) {
+        @Override
+        public <T> void set(Class<?> clazz, String id, T object) {
+            YourBeanFactory.set(clazz, id, object);
+        }
 
-> &ensp;    YourBeanFactory.set(clazz, object);
+        @Override
+        public <T> T get(Class<?> clazz) {
+            return YourBeanFactory.get(clazz);
+        }
 
-> }
->
->  @Override
+        @Override
+        public <T> T get(Class<?> clazz, String id) {
+            return YourBeanFactory.get(clazz, id);
+        }
+    }
 
->  public <T> T get(Class<?> clazz) {
+然后就可以写自己的业务代码了
 
->  &ensp;   return YourBeanFactory.get(clazz);
+    YourCacheBeanFactory cacheBeanFactory = new YourCacheBeanFactory();
+    cacheBeanFactory.set(localCache.getClass(), localCache);
+    cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
 
->  }
-
->  }
-
-&ensp;
-
-> YourCacheBeanFactory cacheBeanFactory = new YourCacheBeanFactory();
-
-> cacheBeanFactory.set(localCache.getClass(), localCache);
-
-> cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
-
-> CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
-
-> cacheInterceptor.run("com.test");
-
-> UserService userService = cacheBeanFactory.get(UserService.class);
-
-> String i = userService.getUserName(3);
-
-> boolean successful = userService.login(new UserInfo(123, "helloworld"));
+    CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
+    cacheInterceptor.run("com.test");
+    UserService userService = cacheBeanFactory.get(UserService.class);
+    String i = userService.getUserName(3);
+    boolean successful = userService.login(new UserInfo(123, "helloworld"));
 
 ## 避免数据服务器过载
 在使用了缓存的应用中, 可能会出现相同key在高并发中都没有命中缓存的情况, 那么这时候每个请求都会从数据源服务端中获取新的数据下来.
