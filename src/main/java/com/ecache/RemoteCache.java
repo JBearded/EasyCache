@@ -9,22 +9,22 @@ import com.alibaba.fastjson.JSON;
  */
 public class RemoteCache extends AbstractCache{
 
-    private RemoteCacheInterface remoteCacheInterface;
+    private CacheInterface cacheInterface;
 
-    public RemoteCache(RemoteCacheInterface remoteCacheInterface) {
+    public RemoteCache(CacheInterface cacheInterface) {
         super();
-        this.remoteCacheInterface = remoteCacheInterface;
+        this.cacheInterface = cacheInterface;
     }
 
-    public RemoteCache(CacheConfig config, RemoteCacheInterface remoteCacheInterface) {
+    public RemoteCache(CacheConfig config, CacheInterface cacheInterface) {
         super(config);
-        this.remoteCacheInterface = remoteCacheInterface;
+        this.cacheInterface = cacheInterface;
     }
 
     @Override
     public <T> T set(String key, T value, int expiredSeconds) {
         String json =JSON.toJSONString(value);
-        remoteCacheInterface.set(key, json, expiredSeconds);
+        cacheInterface.set(key, json, expiredSeconds);
         return value;
     }
 
@@ -41,13 +41,13 @@ public class RemoteCache extends AbstractCache{
     }
 
     public <T> T get(String key, int expiredSeconds, RemoteCacheType type, MissCacheHandler<T> handler) {
-        String result = remoteCacheInterface.get(key);
+        String result = cacheInterface.get(key);
         if(handler != null){
             if(result == null){
                 if(cacheConfig.isAvoidServerOverload()){
                     lock(key);
                     try{
-                        result = remoteCacheInterface.get(key);
+                        result = cacheInterface.get(key);
                         if(result == null){
                             return set(key, handler.getData(), expiredSeconds);
                         }

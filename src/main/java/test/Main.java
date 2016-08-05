@@ -5,9 +5,6 @@ import com.ecache.bean.CacheBeanFactory;
 import com.ecache.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,22 +34,12 @@ public class Main {
         jedisPoolConfig.setMaxIdle(20);
         jedisPoolConfig.setMinIdle(20);
         jedisPoolConfig.setMaxWaitMillis(1000*5);
-        RemoteCacheInterface remoteCacheInterface = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-        RemoteCache remoteCache = new RemoteCache(config, remoteCacheInterface);
+        RedisCache redisCache = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+        RemoteCache remoteCache = new RemoteCache(config, redisCache);
 
 //        registerTest(remoteCache, localCache);
-//        annotationTest(remoteCache, localCache);
+        annotationTest(remoteCache, redisCache, localCache);
 //        threadTest(remoteCache, localCache);
-        Map<Integer, Object> value = new HashMap<>();
-        value.put(1, new UserInfo(1, "123", "a"));
-        remoteCache.set("ok", value, 60*5);
-        Map<Integer, UserInfo> cacheValue = remoteCache.get("ok", new RemoteCacheType<Map<Integer, UserInfo>>(){});
-        Iterator it = cacheValue.keySet().iterator();
-        while(it.hasNext()){
-            Object key = it.next();
-            UserInfo userInfo = cacheValue.get(key);
-            System.out.println(userInfo.getId());
-        }
 
     }
 
@@ -139,20 +126,21 @@ public class Main {
         }).getId());
     }
 
-    public static void annotationTest(RemoteCache remoteCache, LocalCache localCache) throws Exception{
+    public static void annotationTest(RemoteCache remoteCache, RedisCache redisCache, LocalCache localCache) throws Exception{
         CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
         cacheBeanFactory.set(localCache.getClass(), localCache);
         cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
+        cacheBeanFactory.set(redisCache.getClass(), "localRedisCache", redisCache);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
         cacheInterceptor.run("test");
 
         UserService userService = cacheBeanFactory.get(UserService.class);
         String i = userService.getUserName(1);
         System.out.println(i);
-        Thread.sleep(1000 * 1);
+        Thread.sleep(1000 * 2);
         i = userService.getUserName(1);
         System.out.println(i);
-        Thread.sleep(1000 * 1);
+        Thread.sleep(1000 * 2);
         i = userService.getUserName(3);
         System.out.println(i);
 

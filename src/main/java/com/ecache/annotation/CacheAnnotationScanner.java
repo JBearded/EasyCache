@@ -26,22 +26,19 @@ public class CacheAnnotationScanner {
             for(Method method : clazz.getDeclaredMethods()){
                 LocalCache localCacheAn = method.getAnnotation(LocalCache.class);
                 RemoteCache remoteCacheAn = method.getAnnotation(RemoteCache.class);
-                if(localCacheAn != null || remoteCacheAn != null){
-                    MethodCacheAnnInfo annInfo = new MethodCacheAnnInfo();
-                    annInfo.setMethod(method);
-                    if(localCacheAn != null){
-                        annInfo.setCacheClazz(com.ecache.LocalCache.class);
-                        annInfo.setKey(localCacheAn.key());
-                        annInfo.setExpiredSeconds(localCacheAn.expire());
-                        annInfo.setAvoidOverload(false);
-                    }else if(remoteCacheAn != null){
-                        annInfo.setCacheClazz(com.ecache.RemoteCache.class);
-                        annInfo.setKey(remoteCacheAn.key());
-                        annInfo.setExpiredSeconds(remoteCacheAn.expire());
-                        annInfo.setAvoidOverload(remoteCacheAn.avoidOverload());
-                    }
-                    annList.add(annInfo);
+                Cache cacheAn = method.getAnnotation(Cache.class);
+                MethodCacheAnnInfo methodCacheAnnInfo = null;
+                if(cacheAn != null){
+                    methodCacheAnnInfo = getCache(method, cacheAn);
+                }else if(remoteCacheAn != null){
+                    methodCacheAnnInfo = getRemoteCache(method, remoteCacheAn);
+                }else if(localCacheAn != null){
+                    methodCacheAnnInfo = getLocalCache(method, localCacheAn);
                 }
+                if(methodCacheAnnInfo != null){
+                    annList.add(methodCacheAnnInfo);
+                }
+
             }
             if(!annList.isEmpty()){
                 ClassCacheAnnInfo classAnnInfo = new ClassCacheAnnInfo(clazz, annList);
@@ -49,6 +46,39 @@ public class CacheAnnotationScanner {
             }
         }
         return result;
+    }
+
+    private static MethodCacheAnnInfo getLocalCache(Method method, LocalCache localCacheAn){
+        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
+                .method(method)
+                .innerCacheClazz(com.ecache.LocalCache.class)
+                .key(localCacheAn.key())
+                .expiredSeconds(localCacheAn.expire())
+                .avoidOverload(false)
+                .buil();
+        return cacheAnnInfo;
+    }
+
+    private static MethodCacheAnnInfo getRemoteCache(Method method, RemoteCache remoteCacheAn){
+        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
+                .method(method)
+                .innerCacheClazz(com.ecache.RemoteCache.class)
+                .key(remoteCacheAn.key())
+                .expiredSeconds(remoteCacheAn.expire())
+                .avoidOverload(remoteCacheAn.avoidOverload())
+                .buil();
+        return cacheAnnInfo;
+    }
+
+    private static MethodCacheAnnInfo getCache(Method method, Cache cacheAn){
+        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
+                .method(method)
+                .outerCacheClazz(cacheAn.instance())
+                .id(cacheAn.id())
+                .key(cacheAn.key())
+                .expiredSeconds(cacheAn.expire())
+                .buil();
+        return cacheAnnInfo;
     }
 
 

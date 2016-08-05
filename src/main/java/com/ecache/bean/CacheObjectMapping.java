@@ -9,13 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CacheObjectMapping {
 
-    private static Map<Class<?>, Object> cacheObject = new ConcurrentHashMap<>();
+    private static Map<String, Object> cacheObject = new ConcurrentHashMap<>();
 
-    public static <T> void set(Class<?> clazz, T value){
-        cacheObject.put(clazz, value);
+    public static <T> void set(String key, T value){
+        cacheObject.put(key, value);
     }
 
-    public static <T> T get(Class<?> clazz){
-        return (T) cacheObject.get(clazz);
+    public static <T> T get(String key){
+        return (T) cacheObject.get(key);
     }
 }

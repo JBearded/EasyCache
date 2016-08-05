@@ -1,6 +1,7 @@
 package com.ecache.annotation;
 
 import com.ecache.AbstractCache;
+import com.ecache.CacheInterface;
 
 import java.lang.reflect.Method;
 
@@ -18,7 +19,13 @@ public class MethodCacheAnnInfo {
     /**
      * 注解方法使用的缓存类型
      */
-    private Class<? extends AbstractCache> cacheClazz;
+    private Class<? extends AbstractCache> innerCacheClazz;
+    private Class<? extends CacheInterface> outerCacheClazz;
+
+    /**
+     * 缓存实例id
+     */
+    private String id;
 
     /**
      * 注解方法使用的key
@@ -32,54 +39,125 @@ public class MethodCacheAnnInfo {
 
     private boolean avoidOverload;
 
-    public MethodCacheAnnInfo() {
-    }
+    private boolean isInnerCache;
 
-    public MethodCacheAnnInfo(Method method, Class<? extends AbstractCache> cacheClazz, String key, int expiredSeconds, boolean avoidOverload) {
-        this.method = method;
-        this.cacheClazz = cacheClazz;
-        this.key = key;
-        this.expiredSeconds = expiredSeconds;
-        this.avoidOverload = avoidOverload;
+    public MethodCacheAnnInfo(Builder builder) {
+        this.method = builder.method;
+        this.innerCacheClazz = builder.innerCacheClazz;
+        this.outerCacheClazz = builder.outerCacheClazz;
+        this.id = builder.id;
+        this.key = builder.key;
+        this.expiredSeconds = builder.expiredSeconds;
+        this.avoidOverload = builder.avoidOverload;
+        this.isInnerCache = (this.innerCacheClazz != null) ? true : false;
     }
 
     public Method getMethod() {
         return method;
     }
 
-    public void setMethod(Method method) {
-        this.method = method;
+    public Class<? extends AbstractCache> getInnerCacheClazz() {
+        return innerCacheClazz;
     }
 
-    public Class<? extends AbstractCache> getCacheClazz() {
-        return cacheClazz;
+    public Class<? extends CacheInterface> getOuterCacheClazz() {
+        return outerCacheClazz;
     }
 
-    public void setCacheClazz(Class<? extends AbstractCache> cacheClazz) {
-        this.cacheClazz = cacheClazz;
+    public String getId() {
+        return id;
     }
 
     public String getKey() {
         return key;
     }
 
-    public void setKey(String key) {
-        this.key = key;
-    }
-
     public int getExpiredSeconds() {
         return expiredSeconds;
-    }
-
-    public void setExpiredSeconds(int expiredSeconds) {
-        this.expiredSeconds = expiredSeconds;
     }
 
     public boolean isAvoidOverload() {
         return avoidOverload;
     }
 
-    public void setAvoidOverload(boolean avoidOverload) {
-        this.avoidOverload = avoidOverload;
+    public boolean isInnerCache() {
+        return isInnerCache;
     }
+
+    public boolean isOuterCache(){
+        return (!isInnerCache);
+    }
+
+    public static class Builder{
+
+        /**
+         * 被注解的方法
+         */
+        private Method method;
+
+        /**
+         * 注解方法使用的缓存类型
+         */
+        private Class<? extends AbstractCache> innerCacheClazz;
+        private Class<? extends CacheInterface> outerCacheClazz;
+
+        /**
+         * 缓存实例id
+         */
+        private String id;
+
+        /**
+         * 注解方法使用的key
+         */
+        private String key;
+
+        /**
+         * 注解方法使用的过期时间
+         */
+        private int expiredSeconds;
+
+        private boolean avoidOverload;
+
+        public Builder method(Method method){
+            this.method = method;
+            return this;
+        }
+
+        public Builder innerCacheClazz(Class<? extends AbstractCache> cache){
+            this.innerCacheClazz = cache;
+            return this;
+        }
+
+        public Builder outerCacheClazz(Class<? extends CacheInterface> cache){
+            this.outerCacheClazz = cache;
+            return this;
+        }
+
+        public Builder id(String id){
+            this.id = id;
+            return this;
+        }
+
+        public Builder key(String key){
+            this.key = key;
+            return this;
+        }
+
+        public Builder expiredSeconds(int expiredSeconds){
+            this.expiredSeconds = expiredSeconds;
+            return this;
+        }
+
+        public Builder avoidOverload(boolean avoidOverload){
+            this.avoidOverload = avoidOverload;
+            return this;
+        }
+
+        public MethodCacheAnnInfo buil(){
+            return new MethodCacheAnnInfo(this);
+        }
+
+    }
+
+
 }

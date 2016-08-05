@@ -9,7 +9,7 @@ import java.lang.reflect.Type;
  */
 public class RemoteCacheType<T> {
 
-    protected final Type type;
+    public final Type type;
 
     protected RemoteCacheType() {
         Type superClass = this.getClass().getGenericSuperclass();

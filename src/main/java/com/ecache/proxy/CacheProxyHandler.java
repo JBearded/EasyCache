@@ -1,6 +1,8 @@
 package com.ecache.proxy;
 
+import com.alibaba.fastjson.JSON;
 import com.ecache.AbstractCache;
+import com.ecache.CacheInterface;
 import com.ecache.RemoteCache;
 import com.ecache.RemoteCacheType;
 import com.ecache.annotation.ClassCacheAnnInfo;
@@ -36,32 +38,9 @@ public class CacheProxyHandler implements MethodInterceptor {
         MethodCacheAnnInfo methodCacheAnnInfo = getMethodAnnInfo(method);
         if(methodCacheAnnInfo != null){
             String key = getCacheKey(methodCacheAnnInfo, args);
-            AbstractCache cacheObject = getCacheObject(methodCacheAnnInfo);
-            Object value = getCacheValue(cacheObject, key, method);
+            Object value = getCacheValue(methodCacheAnnInfo, key);
             if(value == null){
-                if(methodCacheAnnInfo.isAvoidOverload()){
-                    cacheObject.lock(key);
-                    try{
-                        value = cacheObject.get(key, method.getReturnType());
-                        if(value == null){
-                            result = methodProxy.invokeSuper(object, args);
-                            if(result != null){
-                                int expiredSeconds = methodCacheAnnInfo.getExpiredSeconds();
-                                cacheObject.set(key, result, expiredSeconds);
-                            }
-                        }else {
-                            result = value;
-                        }
-                    }finally {
-                        cacheObject.unlock(key);
-                    }
-                }else{
-                    result = methodProxy.invokeSuper(object, args);
-                    if(result != null){
-                        int expiredSeconds = methodCacheAnnInfo.getExpiredSeconds();
-                        cacheObject.set(key, result, expiredSeconds);
-                    }
-                }
+                result = loadValue(methodCacheAnnInfo, key, object, args, methodProxy);
             }else {
                 result = value;
             }
@@ -155,32 +134,100 @@ public class CacheProxyHandler implements MethodInterceptor {
         return value;
     }
 
-    /**
-     * 从Bean容器中获取相对应的缓存实例, LocalCache或者RemoteCache实例
-     * @param info  方法注解信息
-     * @return
-     */
-    private AbstractCache getCacheObject(MethodCacheAnnInfo info){
-        Class<? extends AbstractCache> cacheClazz = info.getCacheClazz();
-        AbstractCache cacehObject = beanFactory.get(cacheClazz);
-        return cacehObject;
+
+    private Object getCacheValue(MethodCacheAnnInfo info, String key){
+        Method method = info.getMethod();
+        Type type = method.getGenericReturnType();
+        if(info.isInnerCache()){
+            Class<? extends AbstractCache> cacheClazz = info.getInnerCacheClazz();
+            AbstractCache cacheObject = beanFactory.get(cacheClazz);
+            if(cacheObject != null){
+                if(type instanceof ParameterizedType && cacheObject instanceof RemoteCache){
+                    RemoteCache remoteCache = (RemoteCache) cacheObject;
+                    ParameterizedType parameterizedType = (ParameterizedType) type;
+                    return remoteCache.get(key, new RemoteCacheType(parameterizedType){});
+                }else{
+                    return cacheObject.get(key, method.getReturnType());
+                }
+            }
+        }else if(info.isOuterCache()){
+            CacheInterface cacheObject = null;
+            Class<? extends CacheInterface> cacheClazz = info.getOuterCacheClazz();
+            String id = info.getId();
+            if(id == null || "".equals(id)){
+                cacheObject = beanFactory.get(cacheClazz);
+            }else{
+                cacheObject = beanFactory.get(cacheClazz, id);
+            }
+            if(cacheObject != null){
+                String value = cacheObject.get(key);
+                if(value != null){
+                    if(type instanceof ParameterizedType){
+                        ParameterizedType parameterizedType = (ParameterizedType) type;
+                        RemoteCacheType cacheType = new RemoteCacheType(parameterizedType){};
+                        return JSON.parseObject(value, cacheType.type);
+                    }else{
+                        return JSON.parseObject(value, method.getReturnType());
+                    }
+                }
+            }
+        }
+        return null;
     }
 
-    /**
-     * 根据不同的缓存实例, 对获取数据进行处理
-     * @param cacheObject   缓存实例
-     * @param key   缓存key
-     * @param method    缓存方法
-     * @return
-     */
-    private Object getCacheValue(AbstractCache cacheObject, String key, Method method){
-        Type type = method.getGenericReturnType();
-        if(type instanceof ParameterizedType && cacheObject instanceof RemoteCache){
-            RemoteCache remoteCache = (RemoteCache) cacheObject;
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            return remoteCache.get(key, new RemoteCacheType(parameterizedType){});
-        }else{
-            return cacheObject.get(key, method.getReturnType());
+    private Object setCacheValue(MethodCacheAnnInfo info, String key, Object value){
+        int expiredSeconds = info.getExpiredSeconds();
+        if(info.isInnerCache()){
+            Class<? extends AbstractCache> cacheClazz = info.getInnerCacheClazz();
+            AbstractCache cacheObject = beanFactory.get(cacheClazz);
+            if(cacheObject != null){
+                cacheObject.set(key, value, expiredSeconds);
+            }
+        }else if(info.isOuterCache()){
+            CacheInterface cacheObject = null;
+            Class<? extends CacheInterface> cacheClazz = info.getOuterCacheClazz();
+            String id = info.getId();
+            if(id == null || "".equals(id)){
+                cacheObject = beanFactory.get(cacheClazz);
+            }else{
+                cacheObject = beanFactory.get(cacheClazz, id);
+            }
+            if(cacheObject != null){
+                cacheObject.set(key, JSON.toJSONString(value), expiredSeconds);
+            }
         }
+        return value;
+    }
+
+    private Object loadValue(MethodCacheAnnInfo methodCacheAnnInfo, String key, Object object, Object[] args, MethodProxy methodProxy) throws Throwable {
+        Object result = null;
+        if(methodCacheAnnInfo.isInnerCache() && methodCacheAnnInfo.getInnerCacheClazz().equals(RemoteCache.class)){
+            Class<? extends AbstractCache> cacheClazz = methodCacheAnnInfo.getInnerCacheClazz();
+            AbstractCache cacheObject = beanFactory.get(cacheClazz);
+            if(methodCacheAnnInfo.isAvoidOverload()){
+                cacheObject.lock(key);
+                try{
+                    result = getCacheValue(methodCacheAnnInfo, key);
+                    if(result == null){
+                        result = loadValueDirectly(methodCacheAnnInfo, key, object, methodProxy, args);
+                    }
+                }finally {
+                    cacheObject.unlock(key);
+                }
+            }else{
+                result = loadValueDirectly(methodCacheAnnInfo, key, object, methodProxy, args);
+            }
+        }else{
+            result = loadValueDirectly(methodCacheAnnInfo, key, object, methodProxy, args);
+        }
+        return result;
+    }
+
+    private Object loadValueDirectly(MethodCacheAnnInfo methodCacheAnnInfo, String key, Object object, MethodProxy methodProxy, Object[] args) throws Throwable {
+        Object result = methodProxy.invokeSuper(object, args);
+        if(result != null){
+            setCacheValue(methodCacheAnnInfo, key, result);
+        }
+        return result;
     }
 }

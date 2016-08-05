@@ -1,5 +1,6 @@
 package test;
 
+import com.ecache.annotation.Cache;
 import com.ecache.annotation.LocalCache;
 
 import java.util.HashMap;
@@ -18,8 +19,9 @@ public class UserService {
         userMap.put(3, new UserInfo(3, "quan", "345"));
     }
 
-    @LocalCache(key="$1", expire = 5)
+    @Cache(instance = RedisCache.class, key = "$1", expire = 5)
     public String getUserName(int id) {
+        System.out.println("get user name from db");
         UserInfo user = userMap.get(id);
         if(user != null){
             return user.getName();
@@ -27,7 +29,7 @@ public class UserService {
         return null;
     }
 
-    @LocalCache(key="$1.id$1.pword", expire = 5)
+    @LocalCache(key="$1.id$1.pword", expire = 60)
     public boolean login(UserInfo info){
         boolean successful = false;
         int id = info.getId();

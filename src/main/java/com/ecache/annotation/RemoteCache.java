@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface RemoteCache {
 
-   String key() default "$0";
+   String key() default "";
 
    int expire() default 300;
 
