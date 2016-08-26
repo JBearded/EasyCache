@@ -73,10 +73,6 @@ public class CachePolicy<T> {
         return delaySeconds;
     }
 
-    public Policy getPolicy() {
-        return policy;
-    }
-
     public boolean isExpired(){
         return (Policy.Expired == policy);
     }

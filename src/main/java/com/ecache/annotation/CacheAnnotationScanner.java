@@ -1,9 +1,13 @@
 package com.ecache.annotation;
 
 import com.ecache.utils.PackageScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 缓存注解的扫描器
@@ -11,6 +15,8 @@ import java.util.*;
  * @create 2016/7/25 10:24
  */
 public class CacheAnnotationScanner {
+
+    private static final Logger logger = LoggerFactory.getLogger(CacheAnnotationScanner.class);
 
     /**
      * 扫描包名下所有带有缓存注解的类
@@ -36,9 +42,9 @@ public class CacheAnnotationScanner {
                     methodCacheAnnInfo = getLocalCache(method, localCacheAn);
                 }
                 if(methodCacheAnnInfo != null){
+                    logger.info("scan easy cache class:{} method:{}", clazz.getName(), method.getName());
                     annList.add(methodCacheAnnInfo);
                 }
-
             }
             if(!annList.isEmpty()){
                 ClassCacheAnnInfo classAnnInfo = new ClassCacheAnnInfo(clazz, annList);

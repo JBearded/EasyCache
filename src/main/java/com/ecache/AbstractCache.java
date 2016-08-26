@@ -1,6 +1,8 @@
 package com.ecache;
 
 import com.ecache.utils.HashLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,6 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @create 2016/7/12 13:49
  */
 public abstract class AbstractCache {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractCache.class);
 
     /**
      * 定时器, 用于定时刷新缓存
@@ -61,6 +65,7 @@ public abstract class AbstractCache {
         if(registerLock.tryLock()){
             try{
                 if(cachePolicyRegister.containsKey(key)){
+                    logger.info("cache contains key register {} and remove", key);
                     CachePolicy oldCachePolicy = cachePolicyRegister.remove(key);
                     if(oldCachePolicy.isTiming()){
                         scheduler.cancel(key);
@@ -81,13 +86,24 @@ public abstract class AbstractCache {
      * @param cachePolicy 缓存策略
      * @param <T>
      */
-    protected  <T> void retryRegister(final String key, final CachePolicy<T> cachePolicy){
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                register(key, cachePolicy);
-            }
-        }, cacheConfig.getRetryRegisterMSeconds());
+    protected  <T> void retryRegister(String key, CachePolicy<T> cachePolicy){
+        new Timer().schedule(new RetryRegisterTask(key, cachePolicy), cacheConfig.getRetryRegisterMSeconds());
+    }
+
+    private class RetryRegisterTask<T> extends TimerTask{
+
+        private String key;
+        private CachePolicy<T> cachePolicy;
+
+        public RetryRegisterTask(String key, CachePolicy<T> cachePolicy) {
+            this.key = key;
+            this.cachePolicy = cachePolicy;
+        }
+
+        @Override
+        public void run() {
+            register(key, cachePolicy);
+        }
     }
 
     /**
@@ -99,21 +115,39 @@ public abstract class AbstractCache {
     protected  <T> void initPolicy(String key, CachePolicy<T> cachePolicy){
         cachePolicyRegister.put(key, cachePolicy);
         if(cachePolicy.isTiming()){
+            logger.info("init cache timing policy");
             initIntervalCache(key, cachePolicy);
         }else if(cachePolicy.isExpired()){
+            logger.info("init cache expired policy");
             initExpiredCache(key, cachePolicy);
         }
     }
 
-    protected <T> void initIntervalCache(final String key, final CachePolicy<T> cachePolicy){
-        scheduler.run(key, cachePolicy.getDelaySeconds(), cachePolicy.getIntervalSeconds(), new Runnable() {
-            @Override
-            public void run() {
-                MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
-                T value = handler.getData();
-                set(key, value, cacheConfig.getDefaultExpiredSeconds());
-            }
-        });
+    protected <T> void initIntervalCache(String key, CachePolicy<T> cachePolicy){
+        scheduler.run(
+                key,
+                cachePolicy.getDelaySeconds(),
+                cachePolicy.getIntervalSeconds(),
+                new IntervalCacheTask(key, cachePolicy.getExpiredSeconds(), cachePolicy.getMissCacheHandler()));
+    }
+
+    private class IntervalCacheTask<T> implements Runnable{
+
+        private String key;
+        private int expiredSeconds;
+        private MissCacheHandler<T> handler;
+
+        public IntervalCacheTask(String key, int expiredSeconds, MissCacheHandler<T> handler) {
+            this.key = key;
+            this.expiredSeconds = expiredSeconds;
+            this.handler = handler;
+        }
+
+        @Override
+        public void run() {
+            T value = handler.getData();
+            set(key, value, expiredSeconds);
+        }
     }
 
     protected <T> T initExpiredCache(String key, CachePolicy<T> cachePolicy){

@@ -1,5 +1,8 @@
 package com.ecache;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,6 +14,8 @@ import java.util.concurrent.ConcurrentMap;
  * @create  
  */
 public class LocalCache extends AbstractCache{
+
+    private static final Logger logger = LoggerFactory.getLogger(LocalCache.class);
 
     private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
 
@@ -30,6 +35,7 @@ public class LocalCache extends AbstractCache{
             localValue.value = value;
             localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
             caches.put(key, localValue);
+            logger.info("local cache set key:{} value:{}", key, value);
         }finally {
             unlock(key);
         }
@@ -46,6 +52,7 @@ public class LocalCache extends AbstractCache{
             long currentTimeMillis = System.currentTimeMillis();
             result = (localValue == null || localValue.expire < currentTimeMillis) ? null : localValue.value;
             if(result == null){
+                logger.info("local cache get key:{} null and reload", key);
                 caches.remove(key);
                 if(handler != null){
                     result = set(key, handler.getData(), expiredSeconds);
@@ -54,6 +61,7 @@ public class LocalCache extends AbstractCache{
         }finally {
             unlock(key);
         }
+        logger.info("local cache get key:{} value:{}", key, result);
         return result;
     }
 

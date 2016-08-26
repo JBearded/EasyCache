@@ -1,5 +1,8 @@
 package com.ecache.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -15,6 +18,10 @@ import java.util.Set;
  */
 public class PackageScanner {
 
+    private static final Logger logger = LoggerFactory.getLogger(PackageScanner.class);
+
+    private static final String CLASS_SUFFIX = String.valueOf(".class");
+
     /**
      * 从包package中获取所有的Class
      *
@@ -24,7 +31,6 @@ public class PackageScanner {
     public static Set<Class<?>> getClasses(String pack) {
 
         Set<Class<?>> classes = new LinkedHashSet<Class<?>>();
-        boolean recursive = true;
         String packageName = pack;
         String packageDirName = packageName.replace('.', '/');
         Enumeration<URL> dirs;
@@ -36,8 +42,7 @@ public class PackageScanner {
                 String protocol = url.getProtocol();
                 if ("file".equals(protocol)) {
                     String filePath = URLDecoder.decode(url.getFile(), "UTF-8");
-                    findAndAddClassesInPackageByFile(packageName, filePath,
-                            recursive, classes);
+                    findAndAddClassesInPackageByFile(packageName, filePath, classes);
                 }
             }
         } catch (IOException e) {
@@ -52,38 +57,40 @@ public class PackageScanner {
      *
      * @param packageName   包名
      * @param packagePath   包路径
-     * @param recursive 是否扫描子目录
      * @param classes   返回的所有扫描类
      */
-    private static void findAndAddClassesInPackageByFile(String packageName,
-                                                        String packagePath, final boolean recursive, Set<Class<?>> classes) {
+    private static void findAndAddClassesInPackageByFile(
+            String packageName,
+            String packagePath,
+            Set<Class<?>> classes) {
+
         File dir = new File(packagePath);
         if (!dir.exists() || !dir.isDirectory()) {
             return;
         }
-        File[] dirfiles = dir.listFiles(new FileFilter() {
+        File[] dirFiles = dir.listFiles(new FileFilter() {
             public boolean accept(File file) {
-                return (recursive && file.isDirectory())
-                        || (file.getName().endsWith(".class"));
+                return (file.isDirectory()) || (file.getName().endsWith(CLASS_SUFFIX));
             }
         });
-        for (File file : dirfiles) {
+        for (File file : dirFiles) {
             if (file.isDirectory()) {
-                String path = "";
-                if ("".equals(packageName))
+                String EMPTY = String.valueOf("");
+                String path = EMPTY;
+                if (EMPTY.equals(packageName))
                     path = file.getName();
                 else
                     path = packageName + "." + file.getName();
-                findAndAddClassesInPackageByFile(path, file.getAbsolutePath(),
-                        recursive, classes);
+                findAndAddClassesInPackageByFile(path, file.getAbsolutePath(), classes);
             } else {
-                String className = file.getName().substring(0,
-                        file.getName().length() - 6);
+                String className = file.getName().substring(0, file.getName().length() - CLASS_SUFFIX.length());
+                String classPath = packageName + '.' + className;
                 try {
-                    classes.add(Thread.currentThread().getContextClassLoader()
-                            .loadClass(packageName + '.' + className));
+                    Class clazz = Thread.currentThread().getContextClassLoader().loadClass(classPath);
+                    classes.add(clazz);
                 } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+                    logger.error("error load class:{}", classPath, e);
+                    throw new RuntimeException(e);
                 }
             }
         }

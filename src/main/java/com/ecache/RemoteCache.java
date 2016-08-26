@@ -1,6 +1,8 @@
 package com.ecache;
 
 import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 远程缓存
@@ -8,6 +10,8 @@ import com.alibaba.fastjson.JSON;
  * @create 2016/7/9 16:31
  */
 public class RemoteCache extends AbstractCache{
+
+    private static final Logger logger = LoggerFactory.getLogger(RemoteCache.class);
 
     private CacheInterface cacheInterface;
 
@@ -25,6 +29,7 @@ public class RemoteCache extends AbstractCache{
     public <T> T set(String key, T value, int expiredSeconds) {
         String json =JSON.toJSONString(value);
         cacheInterface.set(key, json, expiredSeconds);
+        logger.info("remote cache set key:{} value:{}", key, value);
         return value;
     }
 
@@ -44,6 +49,7 @@ public class RemoteCache extends AbstractCache{
         String result = cacheInterface.get(key);
         if(handler != null){
             if(result == null){
+                logger.info("remote cache get key:{} null and reload", key);
                 if(cacheConfig.isAvoidServerOverload()){
                     lock(key);
                     try{
@@ -59,6 +65,7 @@ public class RemoteCache extends AbstractCache{
                 }
             }
         }
+        logger.info("remote cache get key:{} value:{}", key, result);
         return JSON.parseObject(result, type.type);
     }
 }
