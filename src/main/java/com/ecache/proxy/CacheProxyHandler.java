@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.ecache.AbstractCache;
 import com.ecache.CacheInterface;
 import com.ecache.RemoteCache;
-import com.ecache.RemoteCacheType;
+import com.ecache.CacheType;
 import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
@@ -126,8 +126,8 @@ public class CacheProxyHandler implements MethodInterceptor {
         Object value = null;
         try{
             Class<?> clazz = object.getClass();
-            Method getMethod = clazz.getMethod(getMethodName, null);
-            value = getMethod.invoke(object, null);
+            Method getMethod = clazz.getMethod(getMethodName, (Class<?>) null);
+            value = getMethod.invoke(object, (Object) null);
         }catch (Exception e){
 
         }
@@ -145,7 +145,7 @@ public class CacheProxyHandler implements MethodInterceptor {
                 if(type instanceof ParameterizedType && cacheObject instanceof RemoteCache){
                     RemoteCache remoteCache = (RemoteCache) cacheObject;
                     ParameterizedType parameterizedType = (ParameterizedType) type;
-                    return remoteCache.get(key, new RemoteCacheType(parameterizedType){});
+                    return remoteCache.get(key, new CacheType(parameterizedType){});
                 }else{
                     return cacheObject.get(key, method.getReturnType());
                 }
@@ -164,7 +164,7 @@ public class CacheProxyHandler implements MethodInterceptor {
                 if(value != null){
                     if(type instanceof ParameterizedType){
                         ParameterizedType parameterizedType = (ParameterizedType) type;
-                        RemoteCacheType cacheType = new RemoteCacheType(parameterizedType){};
+                        CacheType cacheType = new CacheType(parameterizedType){};
                         return JSON.parseObject(value, cacheType.type);
                     }else{
                         return JSON.parseObject(value, method.getReturnType());
