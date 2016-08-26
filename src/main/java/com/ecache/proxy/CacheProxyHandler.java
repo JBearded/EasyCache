@@ -3,17 +3,17 @@ package com.ecache.proxy;
 import com.alibaba.fastjson.JSON;
 import com.ecache.AbstractCache;
 import com.ecache.CacheInterface;
-import com.ecache.RemoteCache;
 import com.ecache.CacheType;
+import com.ecache.RemoteCache;
 import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
  * @create 2016/7/27 18:57
  */
 public class CacheProxyHandler implements MethodInterceptor {
+
+    private static final Logger logger = LoggerFactory.getLogger(CacheProxyHandler.class);
 
     private BeanFactoryInterface beanFactory;
     private ClassCacheAnnInfo classCacheAnnInfo;
@@ -70,7 +72,7 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param args  方法参数数组
      * @return  缓存key
      */
-    private String getCacheKey(MethodCacheAnnInfo info, Object[] args){
+    private String getCacheKey(MethodCacheAnnInfo info, Object[] args) {
 
         Class<?> clazz = classCacheAnnInfo.getClazz();
         Method method = info.getMethod();
@@ -91,8 +93,19 @@ public class CacheProxyHandler implements MethodInterceptor {
                     keyValue = args[paramIndex - 1];
                 }else{
                     String fieldName = item.substring(methodIndex + 1);
-                    String getMethodName = "get" + fieldName.toUpperCase().substring(0,1) + fieldName.substring(1);
-                    keyValue = getArgMethodValue(args[paramIndex - 1], getMethodName);
+                    Object paramObject = args[paramIndex - 1];
+                    Class<?> paramClass = paramObject.getClass();
+                    try{
+                        Field field = paramClass.getDeclaredField(fieldName);
+                        if(!Modifier.isPublic(field.getModifiers())){
+                            field.setAccessible(true);
+                        }
+                        keyValue = field.get(paramObject);
+                    }catch (NoSuchFieldException ne){
+                        logger.error("does not exist attribute {} in class {}", fieldName, paramClass.getName(), ne);
+                    }catch (IllegalAccessException ae){
+                        logger.error("get field {} error in class {}", fieldName, paramClass.getName(), ae);
+                    }
                 }
                 if(keyValue != null){
                     keyBuilder.append("|").append(keyValue);
