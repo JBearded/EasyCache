@@ -224,6 +224,10 @@ CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 
 中设置, 参数名为avoidServerOverload,也在可以在方法注解中设置这个参数,默认都是false, 即关闭了这个机制.
 有人可能担心锁是否影响了EasyCache的缓存访问性能, 是的, 加锁确实会影响性能. 但是这个锁是细颗粒度的, 它不会影响不同key的访问, 只会阻塞相同key在线程并发下的get访问. 
 
+## 与ioc框架集成
+EasyCache已经和Spring做了集成, 在Spring中可以方便使用, 请看 https://github.com/JBearded/EasyCacheForSpring
+
+
 
 
 
