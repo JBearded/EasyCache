@@ -20,12 +20,12 @@ public class Scheduler {
     /**
      * 延迟一段时间后执行, 并重复在间隔时间后执行
      * @param key 任务标识, 可用来取消任务
-     * @param delay 一开始的延迟时间, =0即马上执行
-     * @param interval  重复间隔时间, 必须>0
+     * @param delaySeconds 一开始的延迟时间, =0即马上执行
+     * @param intervalSeconds  重复间隔时间, 必须>0
      * @param runnable
      */
-    public void run(String key, int delay, int interval, Runnable runnable){
-        ScheduledFuture scheduledFutureTask = this.scheduledExecutorService.scheduleWithFixedDelay(runnable, delay, interval, TimeUnit.SECONDS);
+    public void run(String key, int delaySeconds, int intervalSeconds, Runnable runnable){
+        ScheduledFuture scheduledFutureTask = this.scheduledExecutorService.scheduleWithFixedDelay(runnable, delaySeconds, intervalSeconds, TimeUnit.SECONDS);
         this.scheduledFutureMap.put(key, scheduledFutureTask);
     }
 

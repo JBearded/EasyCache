@@ -25,6 +25,7 @@ public class Main {
                 .lockSegments(32)
                 .lockIsFair(false)
                 .avoidServerOverload(false)
+                .clearSchedulerIntervalSeconds(60*60)
                 .build();
 
         LocalCache localCache = new LocalCache(config);
@@ -47,7 +48,6 @@ public class Main {
 
         final AtomicInteger localExpireNumber = new AtomicInteger(0);
         final AtomicInteger localIntervalNumber = new AtomicInteger(0);
-        localCache.clearScheduler();
         /*注册过期缓存策略*/
         localCache.register("local-expire-key", new CachePolicy(10, new MissCacheHandler<MyValue>() {
             @Override

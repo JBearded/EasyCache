@@ -94,29 +94,32 @@ public class CacheProxyHandler implements MethodInterceptor {
                 }else{
                     String fieldName = item.substring(methodIndex + 1);
                     Object paramObject = args[paramIndex - 1];
-                    Class<?> paramClass = paramObject.getClass();
-                    try{
-                        Field field = paramClass.getDeclaredField(fieldName);
-                        if(!Modifier.isPublic(field.getModifiers())){
-                            field.setAccessible(true);
-                        }
-                        keyValue = field.get(paramObject);
-                    }catch (NoSuchFieldException ne){
-                        logger.error("does not exist attribute {} in class {}", fieldName, paramClass.getName(), ne);
-                    }catch (IllegalAccessException ae){
-                        logger.error("get field {} error in class {}", fieldName, paramClass.getName(), ae);
-                    }
+                    keyValue = getFieldValue(fieldName, paramObject);
                 }
-                if(keyValue != null){
-                    keyBuilder.append("|").append(keyValue);
-                }
+                keyBuilder.append(keyValue);
             }
         }
         return keyBuilder.toString();
     }
 
+    private Object getFieldValue(String fieldName, Object object){
+        Class<?> paramClass = object.getClass();
+        try{
+            Field field = paramClass.getDeclaredField(fieldName);
+            if(!Modifier.isPublic(field.getModifiers())){
+                field.setAccessible(true);
+            }
+            return field.get(object);
+        }catch (NoSuchFieldException ne){
+            logger.error("does not exist attribute {} in class {}", fieldName, paramClass.getName(), ne);
+        }catch (IllegalAccessException ae){
+            logger.error("get field {} error in class {}", fieldName, paramClass.getName(), ae);
+        }
+        return null;
+    }
+
     /**
-     * 获取默认的缓存key, 不管注解key如何, 都会有默认ClassName + | + MethodName的key值
+     * 获取默认的缓存key, 不管注解key如何, 都会有默认ClassName + | + MethodName + |的key值
      * @param clazz 具有注解方法的类
      * @param method    注解方法
      * @return  默认缓存key
@@ -124,7 +127,7 @@ public class CacheProxyHandler implements MethodInterceptor {
     private String getDefaultKey(Class<?> clazz, Method method){
         String objectName = clazz.getName().replace(".", "|");
         String methodName = method.getName();
-        return objectName +"|"+ methodName;
+        return objectName + "|" + methodName + "|";
     }
 
 

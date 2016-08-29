@@ -7,8 +7,7 @@
     localCache.set("easyCache-local-user", userInfo, 60);
     UserInfo userInfo = localCache.get("easyCache-local-user", UserInfo.class);
 
-本地缓存为了避免长期大量占用内存, 可以调用定时零点清除缓存的操作
-    localCache.clearScheduler();
+本地缓存为了避免长期大量占用内存, 会定时清除缓存, 而间隔时间可以在配置中设置clearSchedulerIntervalSeconds.
 
 下面是远程缓存的基本用法
 首先需要实现RemoteCacheInterface的接口, 用于远程缓存的存储和获取
@@ -34,16 +33,18 @@
         .lockSegments(32)
         .lockIsFair(false)
         .avoidServerOverload(true)
+        .clearSchedulerIntervalSeconds(60*60)
         .build();
 
 这个配置中, 包括了几个参数和默认值
 
-* defaultExpiredSeconds = 60 * 60 * 24;  //默认缓存过期的时间
+* defaultExpiredSeconds = 60 * 60;  //默认缓存过期的时间
 * schedulerCorePoolSize = 64;   //定时器的线程池大小
 * retryRegisterMSeconds = 1000 * 2;    //注册失败后, 延迟多久后再重新注册
 * lockSegments = 32;    //分段锁的段数
 * lockIsFair = false;   //是否公平锁
-* avoidServerOverload = false;  //是否避免数据服务器过载
+* avoidServerOverload = false;  //是否避免数据服务器过载, 用于远程缓存
+* clearSchedulerIntervalSeconds = 60 * 60 * 24; //默认定时清除过期缓存的间隔时间, 用于本地缓存
 
 
 ## 缓存策略
@@ -151,6 +152,7 @@
             .lockSegments(32)
             .lockIsFair(false)
             .avoidServerOverload(false)
+            .clearSchedulerIntervalSeconds(60*60)
             .build();
 
     LocalCache localCache = new LocalCache(config);

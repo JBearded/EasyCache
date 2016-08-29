@@ -3,8 +3,7 @@ package com.ecache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,19 +20,19 @@ public class LocalCache extends AbstractCache{
 
     public LocalCache() {
         super();
+        clearScheduler();
     }
 
     public LocalCache(CacheConfig config){
         super(config);
+        clearScheduler();
     }
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
         lock(key);
         try{
-            LocalValue<T> localValue = new LocalValue<>();
-            localValue.value = value;
-            localValue.expire = System.currentTimeMillis() + expireSeconds * 1000;
+            LocalValue<T> localValue = new LocalValue<>(value, expireSeconds);
             caches.put(key, localValue);
             logger.info("local cache set key:{} value:{}", key, value);
         }finally {
@@ -49,8 +48,7 @@ public class LocalCache extends AbstractCache{
         T result = null;
         try{
             LocalValue<T> localValue = caches.get(key);
-            long currentTimeMillis = System.currentTimeMillis();
-            result = (localValue == null || localValue.expire < currentTimeMillis) ? null : localValue.value;
+            result = (localValue == null || localValue.isExpired()) ? null : localValue.value;
             if(result == null){
                 logger.info("local cache get key:{} null and reload", key);
                 caches.remove(key);
@@ -66,28 +64,43 @@ public class LocalCache extends AbstractCache{
     }
 
     /**
-     * 启动定时清除本地缓存数据, 每天零点启动清除
+     * 启动定时清除本地缓存数据
      */
-    public void clearScheduler(){
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        calendar.add(Calendar.DATE, 1);
-        int delay = (int) ((calendar.getTimeInMillis() - System.currentTimeMillis()) / 1000);
-        int interval = 60 * 60 * 24;
-        scheduler.run("clear-caches", delay, interval, new Runnable() {
+    private void clearScheduler(){
+        int delaySeconds = 60;
+        int intervalSeconds = cacheConfig.getClearSchedulerIntervalSeconds();
+        scheduler.run("clear-caches", delaySeconds, intervalSeconds, new Runnable() {
             @Override
             public void run() {
-                caches.clear();
+                Iterator<String> keyIt = caches.keySet().iterator();
+                while(keyIt.hasNext()){
+                    String key = keyIt.next();
+                    lock(key);
+                    try{
+                        LocalValue localValue = caches.get(key);
+                        if(localValue != null && localValue.isExpired()){
+                            keyIt.remove();
+                        }
+                    }finally {
+                        unlock(key);
+                    }
+                }
             }
         });
     }
 
     class LocalValue<T>{
         T value;
-        long expire;
+        long expiredMS;
+
+        public LocalValue(T value, int expiredSeconds) {
+            this.value = value;
+            this.expiredMS = System.currentTimeMillis() + expiredSeconds * 1000L;
+        }
+
+        private boolean isExpired(){
+            long currentTimeMillis = System.currentTimeMillis();
+            return expiredMS < currentTimeMillis;
+        }
     }
 }

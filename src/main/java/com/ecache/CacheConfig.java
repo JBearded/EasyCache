@@ -37,6 +37,11 @@ public class CacheConfig {
      */
     private boolean avoidServerOverload = false;
 
+    /**
+     * 本地缓存定时清除过期缓存的间隔时间
+     */
+    private int clearSchedulerIntervalSeconds = 60 * 60 * 24;
+
     private CacheConfig(Builder builder) {
         this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
         this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
@@ -44,6 +49,7 @@ public class CacheConfig {
         this.lockSegments = builder.lockSegments;
         this.lockIsFair = builder.lockIsFair;
         this.avoidServerOverload = builder.avoidServerOverload;
+        this.clearSchedulerIntervalSeconds = builder.clearSchedulerIntervalSeconds;
     }
 
     public int getDefaultExpiredSeconds() {
@@ -70,6 +76,10 @@ public class CacheConfig {
         return avoidServerOverload;
     }
 
+    public int getClearSchedulerIntervalSeconds() {
+        return clearSchedulerIntervalSeconds;
+    }
+
     public static class Builder{
 
         private int defaultExpiredSeconds = 60 * 60 * 24;
@@ -83,6 +93,8 @@ public class CacheConfig {
         private boolean lockIsFair = false;
 
         private boolean avoidServerOverload = false;
+
+        private int clearSchedulerIntervalSeconds = 60 * 60 * 24;
 
 
         public Builder() {
@@ -115,6 +127,11 @@ public class CacheConfig {
 
         public Builder avoidServerOverload(boolean avoidServerOverload){
             this.avoidServerOverload = avoidServerOverload;
+            return this;
+        }
+
+        public Builder clearSchedulerIntervalSeconds(int clearSchedulerIntervalSeconds){
+            this.clearSchedulerIntervalSeconds = clearSchedulerIntervalSeconds;
             return this;
         }
 
