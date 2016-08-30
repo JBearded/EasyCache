@@ -18,11 +18,6 @@ public class CacheConfig {
     private int schedulerCorePoolSize = 64;
 
     /**
-     * 注册失败后, 重新注册的间隔时间
-     */
-    private int retryRegisterMSeconds = 1000 * 2;
-
-    /**
      * 分段锁的段数, 其值限制在32<=lockSegments<=1024
      */
     private int lockSegments = 32;
@@ -45,7 +40,6 @@ public class CacheConfig {
     private CacheConfig(Builder builder) {
         this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
         this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
-        this.retryRegisterMSeconds = builder.retryRegisterMSeconds;
         this.lockSegments = builder.lockSegments;
         this.lockIsFair = builder.lockIsFair;
         this.avoidServerOverload = builder.avoidServerOverload;
@@ -58,10 +52,6 @@ public class CacheConfig {
 
     public int getSchedulerCorePoolSize() {
         return schedulerCorePoolSize;
-    }
-
-    public int getRetryRegisterMSeconds() {
-        return retryRegisterMSeconds;
     }
 
     public int getLockSegments() {
@@ -86,8 +76,6 @@ public class CacheConfig {
 
         private int schedulerCorePoolSize = 64;
 
-        private int retryRegisterMSeconds = 1000 * 2;
-
         private int lockSegments = 16;
 
         private boolean lockIsFair = false;
@@ -107,11 +95,6 @@ public class CacheConfig {
 
         public Builder schedulerCorePoolSize(int schedulerCorePoolSize){
             this.schedulerCorePoolSize = schedulerCorePoolSize;
-            return this;
-        }
-
-        public Builder retryRegisterMSeconds(int retryRegisterMSeconds){
-            this.retryRegisterMSeconds = retryRegisterMSeconds;
             return this;
         }
 

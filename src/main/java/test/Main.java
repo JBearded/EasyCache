@@ -21,7 +21,6 @@ public class Main {
         CacheConfig config = new CacheConfig.Builder()
                 .defaultExpiredSeconds(60)
                 .schedulerCorePoolSize(64)
-                .retryRegisterMSeconds(500)
                 .lockSegments(32)
                 .lockIsFair(false)
                 .avoidServerOverload(false)

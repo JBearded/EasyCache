@@ -4,12 +4,8 @@ import com.ecache.utils.HashLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 公用缓存工具
@@ -40,11 +36,6 @@ public abstract class AbstractCache {
      */
     protected ConcurrentMap<String, CachePolicy> cachePolicyRegister = new ConcurrentHashMap<>();
 
-    /**
-     * 注册锁
-     */
-    private final Lock registerLock = new ReentrantLock();
-
     public AbstractCache() {
         this(new CacheConfig.Builder().build());
     }
@@ -62,47 +53,18 @@ public abstract class AbstractCache {
      */
     public <T> void register(String key, CachePolicy<T> cachePolicy){
 
-        if(registerLock.tryLock()){
-            try{
-                if(cachePolicyRegister.containsKey(key)){
-                    logger.info("cache contains key register {} and remove", key);
-                    CachePolicy oldCachePolicy = cachePolicyRegister.remove(key);
-                    if(oldCachePolicy.isTiming()){
-                        scheduler.cancel(key);
-                    }
+        lock(key);
+        try{
+            if(cachePolicyRegister.containsKey(key)){
+                logger.info("cache contains key register {} and remove", key);
+                CachePolicy oldCachePolicy = cachePolicyRegister.remove(key);
+                if(oldCachePolicy.isTiming()){
+                    scheduler.cancel(key);
                 }
-                initPolicy(key, cachePolicy);
-            }finally {
-                registerLock.unlock();
             }
-        }else{
-            retryRegister(key, cachePolicy);
-        }
-    }
-
-    /**
-     * 重新注册缓存key
-     * @param key 缓存key
-     * @param cachePolicy 缓存策略
-     * @param <T>
-     */
-    protected  <T> void retryRegister(String key, CachePolicy<T> cachePolicy){
-        new Timer().schedule(new RetryRegisterTask(key, cachePolicy), cacheConfig.getRetryRegisterMSeconds());
-    }
-
-    private class RetryRegisterTask<T> extends TimerTask{
-
-        private String key;
-        private CachePolicy<T> cachePolicy;
-
-        public RetryRegisterTask(String key, CachePolicy<T> cachePolicy) {
-            this.key = key;
-            this.cachePolicy = cachePolicy;
-        }
-
-        @Override
-        public void run() {
-            register(key, cachePolicy);
+            initPolicy(key, cachePolicy);
+        }finally {
+            unlock(key);
         }
     }
 
