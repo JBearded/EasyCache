@@ -38,8 +38,8 @@ public class Main {
         RemoteCache remoteCache = new RemoteCache(config, redisCache);
 
 //        registerTest(remoteCache, localCache);
-        annotationTest(remoteCache, redisCache, localCache);
-//        threadTest(remoteCache, localCache);
+//        annotationTest(remoteCache, redisCache, localCache);
+        threadTest(remoteCache, localCache);
 
     }
 

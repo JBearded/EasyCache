@@ -30,13 +30,13 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
-        lock(key);
+        hashLock.lock(key);
         try{
             LocalValue<T> localValue = new LocalValue<>(value, expireSeconds);
             caches.put(key, localValue);
             logger.info("local cache set key:{} value:{}", key, value);
         }finally {
-            unlock(key);
+            hashLock.unlock(key);
         }
         return value;
     }
@@ -44,7 +44,7 @@ public class LocalCache extends AbstractCache{
     @Override
     public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
 
-        lock(key);
+        hashLock.lock(key);
         T result = null;
         try{
             LocalValue<T> localValue = caches.get(key);
@@ -57,7 +57,7 @@ public class LocalCache extends AbstractCache{
                 }
             }
         }finally {
-            unlock(key);
+            hashLock.unlock(key);
         }
         logger.info("local cache get key:{} value:{}", key, result);
         return result;
@@ -75,14 +75,14 @@ public class LocalCache extends AbstractCache{
                 Iterator<String> keyIt = caches.keySet().iterator();
                 while(keyIt.hasNext()){
                     String key = keyIt.next();
-                    lock(key);
+                    hashLock.lock(key);
                     try{
                         LocalValue localValue = caches.get(key);
                         if(localValue != null && localValue.isExpired()){
                             keyIt.remove();
                         }
                     }finally {
-                        unlock(key);
+                        hashLock.unlock(key);
                     }
                 }
             }

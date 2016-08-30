@@ -44,6 +44,7 @@ public abstract class AbstractCache {
         this.cacheConfig = config;
         this.scheduler = new Scheduler(this.cacheConfig.getSchedulerCorePoolSize());
         this.hashLock = new HashLock(this.cacheConfig.getLockSegments(), this.cacheConfig.isLockIsFair());
+
     }
 
     /**
@@ -53,7 +54,7 @@ public abstract class AbstractCache {
      */
     public <T> void register(String key, CachePolicy<T> cachePolicy){
 
-        lock(key);
+        hashLock.lock(key);
         try{
             if(cachePolicyRegister.containsKey(key)){
                 logger.info("cache contains key register {} and remove", key);
@@ -64,7 +65,7 @@ public abstract class AbstractCache {
             }
             initPolicy(key, cachePolicy);
         }finally {
-            unlock(key);
+            hashLock.unlock(key);
         }
     }
 
@@ -120,14 +121,6 @@ public abstract class AbstractCache {
         }else{
             return set(key, value, cachePolicy.getExpiredSeconds());
         }
-    }
-
-    public void lock(Object key){
-        hashLock.lock(key);
-    }
-
-    public void unlock(Object key){
-        hashLock.unlock(key);
     }
 
     /**

@@ -51,14 +51,14 @@ public class RemoteCache extends AbstractCache{
             if(result == null){
                 logger.info("remote cache get key:{} null and reload", key);
                 if(cacheConfig.isAvoidServerOverload()){
-                    lock(key);
+                    hashLock.lock(key);
                     try{
                         result = cacheInterface.get(key);
                         if(result == null){
                             return set(key, handler.getData(), expiredSeconds);
                         }
                     }finally {
-                        unlock(key);
+                        hashLock.unlock(key);
                     }
                 }else{
                     return set(key, handler.getData(), expiredSeconds);
