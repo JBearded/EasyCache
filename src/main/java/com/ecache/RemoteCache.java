@@ -42,7 +42,7 @@ public class RemoteCache extends AbstractCache{
 
     @Override
     public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
-        return get(key, expiredSeconds, new CacheType<T>(){}, handler);
+        return get(key, expiredSeconds, new CacheType(clazz){}, handler);
     }
 
     public <T> T get(String key, int expiredSeconds, CacheType type, MissCacheHandler<T> handler) {
@@ -66,6 +66,11 @@ public class RemoteCache extends AbstractCache{
             }
         }
         logger.info("remote cache get key:{} value:{}", key, result);
-        return JSON.parseObject(result, type.type);
+        if(type.actualType instanceof Class){
+            return (T) JSON.parseObject(result, (Class)type.actualType);
+        }else {
+            return JSON.parseObject(result, type.actualType);
+        }
+
     }
 }

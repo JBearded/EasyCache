@@ -5,6 +5,7 @@ import com.ecache.bean.CacheBeanFactory;
 import com.ecache.proxy.CacheInterceptor;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,7 +24,7 @@ public class Main {
                 .schedulerCorePoolSize(64)
                 .lockSegments(32)
                 .lockIsFair(false)
-                .avoidServerOverload(false)
+                .avoidServerOverload(true)
                 .clearSchedulerIntervalSeconds(60*60)
                 .build();
 
@@ -39,8 +40,8 @@ public class Main {
 
 //        registerTest(remoteCache, localCache);
 //        annotationTest(remoteCache, redisCache, localCache);
-        threadTest(remoteCache, localCache);
-
+//        threadTest(remoteCache, localCache);
+        annoThreadTest(remoteCache, localCache, redisCache);
     }
 
     public static void registerTest(RemoteCache remoteCache, LocalCache localCache) throws Exception{
@@ -78,7 +79,7 @@ public class Main {
         System.out.println(localCache.get("local-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
             @Override
             public MyValue getData() {
-                return new MyValue((Integer) this.params, "local-site-value");
+                return new MyValue((Integer) params.get(0), "local-site-value");
             }
         }).getId());
 
@@ -120,7 +121,7 @@ public class Main {
         System.out.println(remoteCache.get("remote-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
             @Override
             public MyValue getData() {
-                return new MyValue((Integer) this.params, "remote-site-value");
+                return new MyValue((Integer) params.get(0), "remote-site-value");
             }
         }).getId());
     }
@@ -154,10 +155,10 @@ public class Main {
         Thread.sleep(1000 * 1);
     }
 
-    public static void threadTest(RemoteCache remoteCache, final LocalCache localCache) throws Exception {
+    public static void threadTest(final RemoteCache remoteCache, final LocalCache localCache) throws Exception {
 
         final AtomicInteger dbNumber = new AtomicInteger(0);
-        localCache.register("ecache-thread-key", new CachePolicy(2, new MissCacheHandler<String>() {
+        remoteCache.register("ecache-thread-key", new CachePolicy(2, new MissCacheHandler<String>() {
             @Override
             public String getData() {
                 System.out.println(dbNumber.incrementAndGet() +" : "+ Thread.currentThread().getName()+": get data from db");
@@ -166,10 +167,9 @@ public class Main {
         }));
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         final CountDownLatch begin = new CountDownLatch(1);
-        for (int i = 0; i < 1000; i++) {
-            if (i != 0 && i % 100 == 0) {
+        for (int i = 1; i <= 1000; i++) {
+            if (i % 100 == 0) {
                 begin.countDown();
-                Thread.sleep(2000);
                 System.out.println("--------------------------------------------------");
             }
             executorService.execute(new Runnable() {
@@ -177,8 +177,43 @@ public class Main {
                 public void run() {
                     try {
                         begin.await();
-                        localCache.get("ecache-thread-key", String.class);
+                        remoteCache.get("ecache-thread-key", String.class);
                     } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+        executorService.shutdown();
+    }
+
+    public static void annoThreadTest(RemoteCache remoteCache, LocalCache localCache, RedisCache redisCache) throws Exception {
+
+
+        final CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
+        cacheBeanFactory.set(localCache.getClass(), localCache);
+        cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
+        cacheBeanFactory.set(redisCache.getClass(), "localRedisCache", redisCache);
+        CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
+        cacheInterceptor.run("test");
+
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        final CountDownLatch begin = new CountDownLatch(1);
+        for (int i = 1; i <= 1000; i++) {
+            if(i == 1000){
+                begin.countDown();
+            }
+            final int id = i % 3 + 1;
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        begin.await();
+                        UserService userService = cacheBeanFactory.get(UserService.class);
+                        List<UserInfo> userInfos = userService.getUserInfo(id);
+                        UserInfo userInfo = userInfos.get(0);
+                        System.out.println(userInfo.getName());
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }

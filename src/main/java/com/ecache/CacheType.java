@@ -9,14 +9,18 @@ import java.lang.reflect.Type;
  */
 public class CacheType<T> {
 
-    public final Type type;
+    public final Type actualType;
 
     protected CacheType() {
         Type superClass = this.getClass().getGenericSuperclass();
-        this.type = ((ParameterizedType)superClass).getActualTypeArguments()[0];
+        this.actualType = ((ParameterizedType)superClass).getActualTypeArguments()[0];
     }
 
     protected CacheType(ParameterizedType type){
-        this.type = type;
+        this.actualType = type;
+    }
+
+    protected CacheType(Class type){
+        this.actualType = type;
     }
 }

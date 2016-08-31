@@ -1,10 +1,7 @@
 package com.ecache.proxy;
 
 import com.alibaba.fastjson.JSON;
-import com.ecache.AbstractCache;
-import com.ecache.CacheInterface;
-import com.ecache.CacheType;
-import com.ecache.RemoteCache;
+import com.ecache.*;
 import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
@@ -40,7 +37,7 @@ public class CacheProxyHandler implements MethodInterceptor {
         MethodCacheAnnInfo methodCacheAnnInfo = getMethodAnnInfo(method);
         if(methodCacheAnnInfo != null){
             String key = getCacheKey(methodCacheAnnInfo, args);
-            Object value = getCacheValue(methodCacheAnnInfo, key);
+            Object value = getCacheValue(methodCacheAnnInfo, key, object, methodProxy, args);
             if(value == null){
                 result = loadValueDirectly(methodCacheAnnInfo, key, object, methodProxy, args);
             }else {
@@ -142,9 +139,9 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param key   方法缓存的key
      * @return
      */
-    private Object getCacheValue(MethodCacheAnnInfo methodCacheAnnInfo, String key){
+    private Object getCacheValue(MethodCacheAnnInfo methodCacheAnnInfo, String key, Object object, MethodProxy methodProxy, Object[] args){
         if(methodCacheAnnInfo.isInnerCache()){
-            return getInnerCache(methodCacheAnnInfo, key);
+            return getInnerCache(methodCacheAnnInfo, key, object, methodProxy, args);
         }else if(methodCacheAnnInfo.isOuterCache()){
             return getOuterCache(methodCacheAnnInfo, key);
         }
@@ -157,18 +154,43 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param key   方法缓存key
      * @return
      */
-    private Object getInnerCache(MethodCacheAnnInfo methodCacheAnnInfo, String key){
-        Method method = methodCacheAnnInfo.getMethod();
-        Type type = method.getGenericReturnType();
+    private Object getInnerCache(
+            MethodCacheAnnInfo methodCacheAnnInfo,
+            String key,
+            Object object,
+            MethodProxy methodProxy,
+            Object[] args){
+
         Class<? extends AbstractCache> cacheClazz = methodCacheAnnInfo.getInnerCacheClazz();
         AbstractCache cacheObject = beanFactory.get(cacheClazz);
         if(cacheObject != null){
+            final Method method = methodCacheAnnInfo.getMethod();
+            Type type = method.getGenericReturnType();
+            ParameterizedType parameterizedType = (type instanceof ParameterizedType) ? (ParameterizedType) type : null;
+            Class<Object> returnClazz = (Class<Object>) ((parameterizedType != null) ? parameterizedType.getRawType() : type);
+            int expiredSeconds = methodCacheAnnInfo.getExpiredSeconds();
+            MissCacheHandler<Object> handler = new MissCacheHandler<Object>(methodProxy, object, args) {
+
+                @Override
+                public Object getData() {
+
+                    Object result = null;
+                    MethodProxy methodProxy = (MethodProxy) params.get(0);
+                    Object object = params.get(1);
+                    Object[] args = (Object[]) params.get(2);
+                    try {
+                        result = methodProxy.invokeSuper(object, args);
+                    } catch (Throwable e) {
+                        logger.error("error to invoke method {} with args {} in class {}", new Object[]{methodProxy.getSuperName(), args, object.getClass().getName(), e});
+                    }
+                    return result;
+                }
+            };
             if(type instanceof ParameterizedType && cacheObject instanceof RemoteCache){
                 RemoteCache remoteCache = (RemoteCache) cacheObject;
-                ParameterizedType parameterizedType = (ParameterizedType) type;
-                return remoteCache.get(key, new CacheType(parameterizedType){});
+                return remoteCache.get(key, expiredSeconds, new CacheType(parameterizedType) {}, handler);
             }else{
-                return cacheObject.get(key, method.getReturnType());
+                return cacheObject.get(key, expiredSeconds, returnClazz, handler);
             }
         }
         return null;
@@ -197,7 +219,7 @@ public class CacheProxyHandler implements MethodInterceptor {
                 if(type instanceof ParameterizedType){
                     ParameterizedType parameterizedType = (ParameterizedType) type;
                     CacheType cacheType = new CacheType(parameterizedType){};
-                    return JSON.parseObject(value, cacheType.type);
+                    return JSON.parseObject(value, cacheType.actualType);
                 }else{
                     return JSON.parseObject(value, method.getReturnType());
                 }

@@ -2,8 +2,11 @@ package test;
 
 import com.ecache.annotation.Cache;
 import com.ecache.annotation.LocalCache;
+import com.ecache.annotation.RemoteCache;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,7 +22,7 @@ public class UserService {
         userMap.put(3, new UserInfo(3, "quan", "345"));
     }
 
-    @Cache(instance = RedisCache.class, key = "$1", expire = 5)
+    @RemoteCache(key = "$1", expire = 5)
     public String getUserName(int id) {
         System.out.println("get user name from db");
         UserInfo user = userMap.get(id);
@@ -27,6 +30,12 @@ public class UserService {
             return user.getName();
         }
         return null;
+    }
+
+    @Cache(instance = RedisCache.class, key = "$1", expire = 5)
+    public List<UserInfo> getUserInfo(int id) {
+        System.out.println("get user info from db");
+        return Arrays.asList(userMap.get(id));
     }
 
     @LocalCache(key="$1.id$1.pword", expire = 60)
