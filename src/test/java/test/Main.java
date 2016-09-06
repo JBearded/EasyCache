@@ -199,8 +199,8 @@ public class Main {
 
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         final CountDownLatch begin = new CountDownLatch(1);
-        for (int i = 1; i <= 1000; i++) {
-            if(i == 1000){
+        for (int i = 1; i <= 1000000; i++) {
+            if(i == 1000000){
                 begin.countDown();
             }
             final int id = i % 3 + 1;

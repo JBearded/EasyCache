@@ -1,6 +1,5 @@
 package test;
 
-import com.ecache.annotation.Cache;
 import com.ecache.annotation.LocalCache;
 import com.ecache.annotation.RemoteCache;
 
@@ -32,7 +31,7 @@ public class UserService {
         return null;
     }
 
-    @Cache(instance = RedisCache.class, key = "$1", expire = 5)
+    @RemoteCache(key = "$1", expire = 1)
     public List<UserInfo> getUserInfo(int id) {
         System.out.println("get user info from db");
         return Arrays.asList(userMap.get(id));
