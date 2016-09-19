@@ -16,8 +16,7 @@ public class RemoteCache extends AbstractCache{
     private CacheInterface cacheInterface;
 
     public RemoteCache(CacheInterface cacheInterface) {
-        super();
-        this.cacheInterface = cacheInterface;
+        this(new CacheConfig.Builder().build(), cacheInterface);
     }
 
     public RemoteCache(CacheConfig config, CacheInterface cacheInterface) {
@@ -27,6 +26,9 @@ public class RemoteCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expiredSeconds) {
+        if(key == null || value == null){
+            throw new NullPointerException();
+        }
         String json =JSON.toJSONString(value);
         cacheInterface.set(key, json, expiredSeconds);
         logger.info("remote cache set key:{} value:{}", key, value);

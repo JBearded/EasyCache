@@ -30,6 +30,9 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
+        if(key == null || value == null){
+            throw new NullPointerException();
+        }
         hashLock.lock(key);
         try{
             LocalValue<T> localValue = new LocalValue<>(value, expireSeconds);

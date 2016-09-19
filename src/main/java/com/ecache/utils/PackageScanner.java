@@ -84,7 +84,7 @@ public class PackageScanner {
                 findAndAddClassesInPackageByFile(path, file.getAbsolutePath(), classes);
             } else {
                 String className = file.getName().substring(0, file.getName().length() - CLASS_SUFFIX.length());
-                String classPath = packageName + '.' + className;
+                String classPath = ("".equals(packageName)) ? className : packageName + '.' + className;
                 try {
                     Class clazz = Thread.currentThread().getContextClassLoader().loadClass(classPath);
                     classes.add(clazz);
