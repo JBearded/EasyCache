@@ -38,10 +38,13 @@ public class Main {
         RedisCache redisCache = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
         RemoteCache remoteCache = new RemoteCache(config, redisCache);
 
-//        registerTest(remoteCache, localCache);
+        registerTest(remoteCache, localCache);
 //        annotationTest(remoteCache, redisCache, localCache);
 //        threadTest(remoteCache, localCache);
-        annoThreadTest(remoteCache, localCache, redisCache);
+//        annoThreadTest(remoteCache, localCache, redisCache);
+
+//        weakTest(localCache);
+
     }
 
     public static void registerTest(RemoteCache remoteCache, LocalCache localCache) throws Exception{
@@ -56,12 +59,12 @@ public class Main {
             }
         }));
         /*注册定时刷新缓存策略*/
-        localCache.register("local-interval-key", new CachePolicy(0, 2, new MissCacheHandler<YourValue>() {
-            @Override
-            public YourValue getData() {
-                return new YourValue(localIntervalNumber.incrementAndGet(), "local-interval-value");
-            }
-        }));
+//        localCache.register("local-interval-key", new CachePolicy(0, 2, new MissCacheHandler<YourValue>() {
+//            @Override
+//            public YourValue getData() {
+//                return new YourValue(localIntervalNumber.incrementAndGet(), "local-interval-value");
+//            }
+//        }));
         Thread.sleep(1000 * 5);
         MyValue localExpireMyValue = localCache.get("local-expire-key", MyValue.class);
         System.out.println(localExpireMyValue.getId());
@@ -69,11 +72,11 @@ public class Main {
         localExpireMyValue = localCache.get("local-expire-key", MyValue.class);
         System.out.println(localExpireMyValue.getId());
         Thread.sleep(1000 * 5);
-        YourValue localIntervalMyValue = localCache.get("local-interval-key", YourValue.class);
-        System.out.println(localIntervalMyValue.getId());
-        Thread.sleep(1000 * 5);
-        localIntervalMyValue = localCache.get("local-interval-key", YourValue.class);
-        System.out.println(localIntervalMyValue.getId());
+//        YourValue localIntervalMyValue = localCache.get("local-interval-key", YourValue.class);
+//        System.out.println(localIntervalMyValue.getId());
+//        Thread.sleep(1000 * 5);
+//        localIntervalMyValue = localCache.get("local-interval-key", YourValue.class);
+//        System.out.println(localIntervalMyValue.getId());
         /*即时获取缓存*/
         int myId = 1024;
         System.out.println(localCache.get("local-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
@@ -85,45 +88,45 @@ public class Main {
 
 
 
-        final AtomicInteger remoteExpireNumber = new AtomicInteger(0);
-        final AtomicInteger remoteIntervalNumber = new AtomicInteger(0);
-        /*注册过期缓存策略*/
-        remoteCache.register("remote-expire-key", new CachePolicy<MyValue>(10, new MissCacheHandler<MyValue>() {
-            @Override
-            public MyValue getData() {
-                return new MyValue(remoteExpireNumber.incrementAndGet(), "remote-expire-value");
-            }
-        }));
-        /*注册定时刷新缓存策略*/
-        remoteCache.register("remote-interval-key", new CachePolicy<YourValue>(0, 2, new MissCacheHandler<YourValue>() {
-            @Override
-            public YourValue getData() {
-                return new YourValue(remoteIntervalNumber.incrementAndGet(), "remote-interval-value");
-            }
-        }));
-
-
-        Thread.sleep(1000 * 5);
-        MyValue remoteExpireMyValue = remoteCache.get("remote-expire-key", MyValue.class);
-        System.out.println(remoteExpireMyValue.getId());
-        Thread.sleep(1000 * 5);
-        remoteExpireMyValue = remoteCache.get("remote-expire-key", MyValue.class);
-        System.out.println(remoteExpireMyValue.getId());
-
-        Thread.sleep(1000 * 5);
-        YourValue remoteIntervalMyValue = remoteCache.get("remote-interval-key", YourValue.class);
-        System.out.println(remoteIntervalMyValue.getId());
-        Thread.sleep(1000 * 5);
-        remoteIntervalMyValue = remoteCache.get("remote-interval-key", YourValue.class);
-        System.out.println(remoteIntervalMyValue.getId());
-
-        /*即时获取缓存*/
-        System.out.println(remoteCache.get("remote-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
-            @Override
-            public MyValue getData() {
-                return new MyValue((Integer) params.get(0), "remote-site-value");
-            }
-        }).getId());
+//        final AtomicInteger remoteExpireNumber = new AtomicInteger(0);
+//        final AtomicInteger remoteIntervalNumber = new AtomicInteger(0);
+//        /*注册过期缓存策略*/
+//        remoteCache.register("remote-expire-key", new CachePolicy<MyValue>(10, new MissCacheHandler<MyValue>() {
+//            @Override
+//            public MyValue getData() {
+//                return new MyValue(remoteExpireNumber.incrementAndGet(), "remote-expire-value");
+//            }
+//        }));
+//        /*注册定时刷新缓存策略*/
+//        remoteCache.register("remote-interval-key", new CachePolicy<YourValue>(0, 2, new MissCacheHandler<YourValue>() {
+//            @Override
+//            public YourValue getData() {
+//                return new YourValue(remoteIntervalNumber.incrementAndGet(), "remote-interval-value");
+//            }
+//        }));
+//
+//
+//        Thread.sleep(1000 * 5);
+//        MyValue remoteExpireMyValue = remoteCache.get("remote-expire-key", MyValue.class);
+//        System.out.println(remoteExpireMyValue.getId());
+//        Thread.sleep(1000 * 5);
+//        remoteExpireMyValue = remoteCache.get("remote-expire-key", MyValue.class);
+//        System.out.println(remoteExpireMyValue.getId());
+//
+//        Thread.sleep(1000 * 5);
+//        YourValue remoteIntervalMyValue = remoteCache.get("remote-interval-key", YourValue.class);
+//        System.out.println(remoteIntervalMyValue.getId());
+//        Thread.sleep(1000 * 5);
+//        remoteIntervalMyValue = remoteCache.get("remote-interval-key", YourValue.class);
+//        System.out.println(remoteIntervalMyValue.getId());
+//
+//        /*即时获取缓存*/
+//        System.out.println(remoteCache.get("remote-site-key", 100, MyValue.class, new MissCacheHandler<MyValue>(myId) {
+//            @Override
+//            public MyValue getData() {
+//                return new MyValue((Integer) params.get(0), "remote-site-value");
+//            }
+//        }).getId());
     }
 
     public static void annotationTest(RemoteCache remoteCache, RedisCache redisCache, LocalCache localCache) throws Exception{
@@ -220,6 +223,44 @@ public class Main {
             });
         }
         executorService.shutdown();
+    }
+
+    public static void weakTest(LocalCache localCache) throws InterruptedException {
+        Thread.sleep(1000*5);
+        System.out.println("start........................");
+        for(int i = 0; i < 10000; i++){
+            localCache.set(String.valueOf(i), i, 60*60);
+        }
+        System.out.println("end.........................");
+        for(int i = 0; i < 100; i++){
+            System.out.println(localCache.get(String.valueOf(i), Integer.class));
+        }
+
+        //在内存足够的时候gc
+        Thread.sleep(1000*5);
+        System.out.println("gc.........................");
+        System.gc();
+        for(int i = 0; i < 100; i++){
+            System.out.println(localCache.get(String.valueOf(i), Integer.class));
+        }
+
+        //添加元素知道内存不足导致gc
+        Thread.sleep(1000*5);
+        System.out.println("OOM gc.......................");
+        try {
+            for (int i = 0; i <= 1000; i++) {
+                if (i >= 1000) {
+                    localCache.set(String.valueOf(i), new byte[1000 * 1000 * 200], 60 * 60);
+                } else {
+                    localCache.set(String.valueOf(i), i, 60 * 60);
+                }
+            }
+        }catch (Exception e){
+
+        }
+        for(int i = 0; i < 100; i++){
+            System.out.println(localCache.get(String.valueOf(i), Integer.class));
+        }
     }
 
     static class MyValue{

@@ -3,6 +3,7 @@ package com.ecache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.ref.SoftReference;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -16,7 +17,7 @@ public class LocalCache extends AbstractCache{
 
     private static final Logger logger = LoggerFactory.getLogger(LocalCache.class);
 
-    private ConcurrentMap<String, LocalValue> caches = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, SoftLocalValue> caches = new ConcurrentHashMap<>();
 
     public LocalCache() {
         super();
@@ -35,7 +36,7 @@ public class LocalCache extends AbstractCache{
         }
         hashLock.lock(key);
         try{
-            LocalValue<T> localValue = new LocalValue<>(value, expireSeconds);
+            SoftLocalValue<T> localValue = new SoftLocalValue<>(value, expireSeconds);
             caches.put(key, localValue);
             logger.info("local cache set key:{} value:{}", key, value);
         }finally {
@@ -50,8 +51,8 @@ public class LocalCache extends AbstractCache{
         hashLock.lock(key);
         T result = null;
         try{
-            LocalValue<T> localValue = caches.get(key);
-            result = (localValue == null || localValue.isExpired()) ? null : localValue.value;
+            SoftLocalValue<T> localValue = caches.get(key);
+            result = (localValue == null || localValue.get() == null || localValue.get().isExpired()) ? null : (T) localValue.get().value;
             if(result == null){
                 logger.info("local cache get key:{} null and reload", key);
                 caches.remove(key);
@@ -80,8 +81,8 @@ public class LocalCache extends AbstractCache{
                     String key = keyIt.next();
                     hashLock.lock(key);
                     try{
-                        LocalValue localValue = caches.get(key);
-                        if(localValue != null && localValue.isExpired()){
+                        SoftLocalValue<Object> localValue = caches.get(key);
+                        if(localValue != null && localValue.get() != null && localValue.get().isExpired()){
                             keyIt.remove();
                         }
                     }finally {
@@ -104,6 +105,13 @@ public class LocalCache extends AbstractCache{
         private boolean isExpired(){
             long currentTimeMillis = System.currentTimeMillis();
             return expiredMS < currentTimeMillis;
+        }
+    }
+
+    class SoftLocalValue<T> extends SoftReference<LocalValue> {
+
+        public SoftLocalValue(T value, int expiredSeconds) {
+            super(new LocalValue(value, expiredSeconds));
         }
     }
 }
