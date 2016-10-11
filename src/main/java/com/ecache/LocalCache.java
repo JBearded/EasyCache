@@ -29,6 +29,12 @@ public class LocalCache extends AbstractCache{
         clearScheduler();
     }
 
+    @Deprecated
+    @Override
+    public <T> void register(String key, CachePolicy<T> cachePolicy) {
+        super.register(key, cachePolicy);
+    }
+
     @Override
     public <T> T set(String key, T value, int expireSeconds){
         if(key == null || value == null){

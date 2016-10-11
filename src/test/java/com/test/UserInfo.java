@@ -1,4 +1,4 @@
-package test;
+package com.test;
 
 /**
  * @author 谢俊权

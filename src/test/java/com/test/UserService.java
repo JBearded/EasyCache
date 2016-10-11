@@ -1,4 +1,4 @@
-package test;
+package com.test;
 
 import com.ecache.annotation.LocalCache;
 import com.ecache.annotation.RemoteCache;
