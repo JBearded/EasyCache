@@ -79,6 +79,37 @@
         }
     }));
 
+## 简化业务缓存代码
+使用EasyCache就不需要写重复的if-else代码了, 如下面代码
+
+    UserInfo userInfo = remoteCache.get(
+                    key,    //缓存key
+                    60,     //缓存时间
+                    UserInfo.class,   //缓存类型
+                    new MissCacheHandler<UserInfo>(biz, moduleId) {
+                        @Override
+                        public UserInfo getData() {
+                            String biz = (String) params.get(0);
+                            int moduleId = (int) params.get(1);
+                            return userDao.getUserInfo(biz, moduleId);
+                    }
+            });
+
+同时EasyCache也支持泛型集合
+
+    Map<String , PageData<UserInfo>> pageDataMap = remoteCache.get(
+                    key,
+                    60,
+                    new CacheType<Map<String , PageData<UserInfo>>>() {},
+                    new MissCacheHandler<Map<String , PageData<UserInfo>>>(biz, moduleId) {
+                        @Override
+                        public Map<String , PageData<UserInfo>> getData() {
+                            String biz = (String) params.get(0);
+                            int moduleId = (int) params.get(1);
+                            return pageDao.pageMap(biz, moduleId);
+                    }
+            });
+
 ## 缓存注解
 为了更方便使用缓存, EasyCache支持了缓存注解的方式来做方法缓存. 先看一下例子`UserService.java`
 
