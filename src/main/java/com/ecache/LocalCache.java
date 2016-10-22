@@ -37,16 +37,17 @@ public class LocalCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expireSeconds){
-        if(key == null || value == null){
-            throw new NullPointerException();
-        }
-        hashLock.lock(key);
-        try{
-            SoftLocalValue<T> localValue = new SoftLocalValue<>(value, expireSeconds);
-            caches.put(key, localValue);
-            logger.info("local cache set key:{} value:{}", key, value);
-        }finally {
-            hashLock.unlock(key);
+        if(key == null){
+            throw new NullPointerException("key can not be null");
+        }else if(value != null){
+            hashLock.lock(key);
+            try{
+                SoftLocalValue<T> localValue = new SoftLocalValue<>(value, expireSeconds);
+                caches.put(key, localValue);
+                logger.info("local cache set key:{} value:{}", key, value);
+            }finally {
+                hashLock.unlock(key);
+            }
         }
         return value;
     }

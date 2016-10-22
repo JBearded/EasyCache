@@ -26,12 +26,13 @@ public class RemoteCache extends AbstractCache{
 
     @Override
     public <T> T set(String key, T value, int expiredSeconds) {
-        if(key == null || value == null){
-            throw new NullPointerException();
+        if(key == null){
+            throw new NullPointerException("key can not be null");
+        }else if(value != null){
+            String json =JSON.toJSONString(value);
+            cacheInterface.set(key, json, expiredSeconds);
+            logger.info("remote cache set key:{} value:{}", key, value);
         }
-        String json =JSON.toJSONString(value);
-        cacheInterface.set(key, json, expiredSeconds);
-        logger.info("remote cache set key:{} value:{}", key, value);
         return value;
     }
 
