@@ -10,40 +10,42 @@ public class CacheConfig {
     /**
      * 默认过期时间
      */
-    private int defaultExpiredSeconds = 60 * 60 * 24;
+    protected int defaultExpiredSeconds = 60 * 60 * 24;
 
     /**
      * 定时器的核心线程数
      */
-    private int schedulerCorePoolSize = 64;
+    protected int schedulerCorePoolSize = 64;
 
     /**
      * 分段锁的段数, 其值限制在32<=lockSegments<=1024
      */
-    private int lockSegments = 32;
+    protected int lockSegments = 32;
 
     /**
      * 是否是公平锁
       */
-    private boolean lockIsFair = false;
+    protected boolean lockIsFair = false;
 
     /**
      * 是否防止数据源服务端过载
      */
-    private boolean avoidServerOverload = false;
+    protected boolean avoidServerOverload = false;
 
     /**
      * 本地缓存定时清除过期缓存的间隔时间
      */
     private int clearSchedulerIntervalSeconds = 60 * 60 * 24;
 
-    private CacheConfig(Builder builder) {
-        this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
-        this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
-        this.lockSegments = builder.lockSegments;
-        this.lockIsFair = builder.lockIsFair;
-        this.avoidServerOverload = builder.avoidServerOverload;
-        this.clearSchedulerIntervalSeconds = builder.clearSchedulerIntervalSeconds;
+    protected CacheConfig(Builder builder) {
+        if(builder != null){
+            this.defaultExpiredSeconds = builder.defaultExpiredSeconds;
+            this.schedulerCorePoolSize = builder.schedulerCorePoolSize;
+            this.lockSegments = builder.lockSegments;
+            this.lockIsFair = builder.lockIsFair;
+            this.avoidServerOverload = builder.avoidServerOverload;
+            this.clearSchedulerIntervalSeconds = builder.clearSchedulerIntervalSeconds;
+        }
     }
 
     public int getDefaultExpiredSeconds() {
