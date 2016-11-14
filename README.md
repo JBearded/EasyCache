@@ -118,19 +118,19 @@
         return doSomething(id);
     }
 
-    @LocalCache(key="$1.id$1.pword", expire = 5)
+    @LocalCache(key="userId_{$1.id}_userPw_{$1.pword}", expire = 5)
     public boolean login(UserInfo info){
         return doSomething(id);
     }
 
-    @RemoteCache(key="$1", expire = 5, avoidOverload = true)
+    @RemoteCache(key="userId_$1", expire = 5, avoidOverload = true)
     public boolean getUser(int id){
         return doSomething(id);
     }
 
 @Cache注解用于自定义的缓存实例，需要实现CacheInterface的接口。而@RemoteCache的缓存实现也要实现CacheInterface的接口。
 @LocalCache则是本地缓存，已经有了内置实现。在key注解参数中，$1表示第一个参数值, 以此类推, $10表示第10个参数。
-而$1.name表示第一个参数的name属性值. 最终缓存的key为: key = 类名 + 方法名 + 各种参数值($1$3.name$4等等)
+而{$1.name}表示第一个参数的name属性值. 最终缓存的key为: key = 类名 + 方法名 + 带有参数值($1$3.name$4等等)的自定义key
 
 在使用远程缓存或者自定义缓存注解之前，需要先实现CacheInterface的接口
 
@@ -255,6 +255,10 @@ CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 
 中设置, 参数名为avoidServerOverload,也在可以在方法注解中设置这个参数,默认都是false, 即关闭了这个机制.
 有人可能担心锁是否影响了EasyCache的缓存访问性能, 是的, 加锁确实会影响性能. 但是这个锁是细颗粒度的, 它不会影响不同key的访问, 只会阻塞相同key在线程并发下的get访问.
 
+
+## 在通用框架中的使用
+
+* spring: https://github.com/JBearded/EasyCache-Spring-Sample.git
 
 
 
