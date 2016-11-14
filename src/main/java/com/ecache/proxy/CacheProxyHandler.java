@@ -74,29 +74,42 @@ public class CacheProxyHandler implements MethodInterceptor {
         Class<?> clazz = classCacheAnnInfo.getClazz();
         Method method = info.getMethod();
         String annotationKey = info.getKey();
-        String defaultKey = getDefaultKey(clazz, method);
-        StringBuilder keyBuilder = new StringBuilder(defaultKey);
-        String regex = "\\$([1-9]{1})(\\.\\w+)?";
+        String prefixKey = getPrefixKey(clazz, method);
+        String cacheKey = prefixKey + annotationKey;
+        if(annotationKey == null || "".equals(annotationKey.trim())){
+            return cacheKey;
+        }
+        String regex = "[\\{]{0,1}\\$([1-9]{1})(\\.\\w+)?[\\}]{0,1}";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(annotationKey);
         while(matcher.find()){
-            String item = matcher.group();
-            Object keyValue = null;
-            String index = item.substring(1,2);
-            int paramIndex = Integer.valueOf(index);
-            if(paramIndex <= args.length){
-                int methodIndex = item.indexOf(".");
-                if(methodIndex < 0){
-                    keyValue = args[paramIndex - 1];
-                }else{
-                    String fieldName = item.substring(methodIndex + 1);
-                    Object paramObject = args[paramIndex - 1];
-                    keyValue = getFieldValue(fieldName, paramObject);
-                }
-                keyBuilder.append(keyValue);
+            String key = matcher.group();
+            Object keyValue = getKeyValue(key, args);
+            cacheKey = cacheKey.replace(key, keyValue.toString());
+        }
+        return cacheKey;
+    }
+
+    /**
+     * 通过匹配到的key关键字, 获取其参数值
+     * @param key
+     * @return
+     */
+    private Object getKeyValue(String key, Object[] args){
+        String item = key.replaceAll("[\\{|\\}]", "");
+        String index = item.substring(1,2);
+        int paramIndex = Integer.valueOf(index);
+        if(paramIndex <= args.length){
+            int methodIndex = item.indexOf(".");
+            if(methodIndex < 0){
+                return args[paramIndex - 1];
+            }else{
+                String fieldName = item.substring(methodIndex + 1);
+                Object paramObject = args[paramIndex - 1];
+                return getFieldValue(fieldName, paramObject);
             }
         }
-        return keyBuilder.toString();
+        return null;
     }
 
     /**
@@ -105,10 +118,10 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param method    注解方法
      * @return  默认缓存key
      */
-    private String getDefaultKey(Class<?> clazz, Method method){
-        String objectName = clazz.getName().replace(".", "|");
+    private String getPrefixKey(Class<?> clazz, Method method){
+        String objectName = clazz.getName();
         String methodName = method.getName();
-        return objectName + "|" + methodName + "|";
+        return objectName + "." + methodName + "_";
     }
 
     /**

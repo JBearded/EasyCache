@@ -38,8 +38,8 @@ public class Main {
         RedisCache redisCache = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
         RemoteCache remoteCache = new RemoteCache(config, redisCache);
 
-        registerTest(remoteCache, localCache);
-//        annotationTest(remoteCache, redisCache, localCache);
+//        registerTest(remoteCache, localCache);
+        annotationTest(remoteCache, redisCache, localCache);
 //        threadTest(remoteCache, localCache);
 //        annoThreadTest(remoteCache, localCache, redisCache);
 
@@ -135,7 +135,7 @@ public class Main {
         cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
         cacheBeanFactory.set(redisCache.getClass(), "localRedisCache", redisCache);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
-        cacheInterceptor.run("test");
+        cacheInterceptor.run("com.test");
 
         UserService userService = cacheBeanFactory.get(UserService.class);
         String i = userService.getUserName(1);

@@ -13,6 +13,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface RemoteCache {
 
+   /**
+    * 缓存key, 默认是类名+方法名
+    * 你可以使用$1,{$1},{$1.fieldName}的方式来觉得哪个参数值作为key的一部分
+    * @return
+    */
    String key() default "";
 
    int expire() default 300;
