@@ -49,7 +49,6 @@ public class MethodCacheAnnInfo {
         this.key = builder.key;
         this.expiredSeconds = builder.expiredSeconds;
         this.avoidOverload = builder.avoidOverload;
-        this.isInnerCache = (this.innerCacheClazz != null) ? true : false;
     }
 
     public Method getMethod() {
@@ -81,11 +80,23 @@ public class MethodCacheAnnInfo {
     }
 
     public boolean isInnerCache() {
-        return isInnerCache;
+        return (this.innerCacheClazz != null) ? true : false;
     }
 
     public boolean isOuterCache(){
-        return (!isInnerCache);
+        return (this.outerCacheClazz != null) ? true : false;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder(super.toString())
+                .append("_").append(id)
+                .append("_").append(key)
+                .append("_").append(method)
+                .append("_").append(expiredSeconds)
+                .append("_").append(isInnerCache)
+                .append("_").append(avoidOverload)
+                .toString();
     }
 
     public static class Builder{

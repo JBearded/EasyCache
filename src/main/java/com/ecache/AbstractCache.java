@@ -78,10 +78,10 @@ public abstract class AbstractCache {
     protected  <T> void initPolicy(String key, CachePolicy<T> cachePolicy){
         cachePolicyRegister.put(key, cachePolicy);
         if(cachePolicy.isTiming()){
-            logger.info("init cache timing policy");
+            logger.info("init cache timing policy, key:{}", key);
             initIntervalCache(key, cachePolicy);
         }else if(cachePolicy.isExpired()){
-            logger.info("init cache expired policy");
+            logger.info("init cache expired policy, key:{}", key);
             initExpiredCache(key, cachePolicy);
         }
     }
@@ -116,11 +116,9 @@ public abstract class AbstractCache {
     protected <T> T initExpiredCache(String key, CachePolicy<T> cachePolicy){
         MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
         T value = handler.getData();
-        if(cachePolicy.getExpiredSeconds() <= 0){
-            return set(key, value, this.cacheConfig.getDefaultExpiredSeconds());
-        }else{
-            return set(key, value, cachePolicy.getExpiredSeconds());
-        }
+        return (cachePolicy.getExpiredSeconds() <= 0)
+                ? set(key, value, this.cacheConfig.getDefaultExpiredSeconds())
+                : set(key, value, cachePolicy.getExpiredSeconds());
     }
 
     /**
@@ -143,7 +141,9 @@ public abstract class AbstractCache {
     public <T> T get(String key, Class<T> clazz){
         CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
         MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
-        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpiredSeconds();
+        int expiredSeconds = (cachePolicy == null)
+                ? cacheConfig.getDefaultExpiredSeconds()
+                : cachePolicy.getExpiredSeconds();
         return get(key, expiredSeconds, clazz, handler);
     }
 

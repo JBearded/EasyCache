@@ -135,7 +135,7 @@ public class Main {
         cacheBeanFactory.set(remoteCache.getClass(), remoteCache);
         cacheBeanFactory.set(redisCache.getClass(), "localRedisCache", redisCache);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
-        cacheInterceptor.run("com.test");
+        cacheInterceptor.run();
 
         UserService userService = cacheBeanFactory.get(UserService.class);
         String i = userService.getUserName(1);

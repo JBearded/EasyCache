@@ -42,7 +42,7 @@ public class CacheAnnotationScanner {
                     methodCacheAnnInfo = getLocalCache(method, localCacheAn);
                 }
                 if(methodCacheAnnInfo != null){
-                    logger.info("scan easy cache class:{} method:{}", clazz.getName(), method.getName());
+                    logger.info("scan class, cacheInfo:{}", methodCacheAnnInfo.toString());
                     annList.add(methodCacheAnnInfo);
                 }
             }

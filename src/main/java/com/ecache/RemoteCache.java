@@ -28,18 +28,19 @@ public class RemoteCache extends AbstractCache{
     public <T> T set(String key, T value, int expiredSeconds) {
         if(key == null){
             throw new NullPointerException("key can not be null");
-        }else if(value != null){
-            String json =JSON.toJSONString(value);
-            cacheInterface.set(key, json, expiredSeconds);
-            logger.info("remote cache set key:{} value:{}", key, value);
         }
+        String json =JSON.toJSONString(value);
+        cacheInterface.set(key, json, expiredSeconds);
+        logger.info("remote cache set key:{} value:{}", key, value);
         return value;
     }
 
     public <T> T get(String key, CacheType type){
         CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
         MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
-        int expiredSeconds = (cachePolicy == null) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpiredSeconds();
+        int expiredSeconds = (cachePolicy == null)
+                ? cacheConfig.getDefaultExpiredSeconds()
+                : cachePolicy.getExpiredSeconds();
         return get(key, expiredSeconds, type, handler);
     }
 
@@ -50,30 +51,25 @@ public class RemoteCache extends AbstractCache{
 
     public <T> T get(String key, int expiredSeconds, CacheType type, MissCacheHandler<T> handler) {
         String result = cacheInterface.get(key);
-        if(handler != null){
-            if(result == null){
-                logger.info("remote cache get key:{} null and reload", key);
-                if(cacheConfig.isAvoidServerOverload()){
-                    hashLock.lock(key);
-                    try{
-                        result = cacheInterface.get(key);
-                        if(result == null){
-                            return set(key, handler.getData(), expiredSeconds);
-                        }
-                    }finally {
-                        hashLock.unlock(key);
-                    }
-                }else{
+        if(result == null && handler != null){
+            logger.info("remote cache get key:{} null and reload", key);
+            if(!cacheConfig.isAvoidServerOverload()){
+                return set(key, handler.getData(), expiredSeconds);
+            }
+            hashLock.lock(key);
+            try{
+                result = cacheInterface.get(key);
+                if(result == null){
                     return set(key, handler.getData(), expiredSeconds);
                 }
+            }finally {
+                hashLock.unlock(key);
             }
         }
         logger.info("remote cache get key:{} value:{}", key, result);
-        if(type.actualType instanceof Class){
-            return (T) JSON.parseObject(result, (Class)type.actualType);
-        }else {
-            return JSON.parseObject(result, type.actualType);
-        }
+        return (type.actualType instanceof Class)
+                ? (T) JSON.parseObject(result, (Class)type.actualType)
+                : (T) JSON.parseObject(result, type.actualType);
 
     }
 }

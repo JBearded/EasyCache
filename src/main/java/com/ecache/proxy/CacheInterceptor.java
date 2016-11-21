@@ -5,6 +5,8 @@ import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
 import com.ecache.bean.InjectorInterface;
 import net.sf.cglib.proxy.Enhancer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,6 +18,8 @@ import java.util.Map;
  * @create 2016/7/25 16:49
  */
 public class CacheInterceptor {
+
+    private static final Logger logger = LoggerFactory.getLogger(CacheInterceptor.class);
 
     /**
      * Bean工厂接口, 用于外部加载代理的缓存bean
@@ -38,10 +42,18 @@ public class CacheInterceptor {
     }
 
     /**
-     * 扫描包名下的有LocalCache或者RemoteCache注解的类方法, 并将缓存代理类存入Bean容器
+     * 扫描所有的有LocalCache,RemoteCache和Cache注解的类方法, 并将缓存代理类存入Bean容器
+     */
+    public void run(){
+        this.run("");
+    }
+
+    /**
+     * 扫描包名下的有LocalCache,RemoteCache和Cache注解的类方法, 并将缓存代理类存入Bean容器
      * @param pack 需要扫描的包名
      */
     public void run(String pack){
+        logger.info("begin to scan package:{}", pack);
         Map<Class<?>, Object> proxyBeanMap = new HashMap<>();
         List<ClassCacheAnnInfo> classCacheAnnInfoList =  CacheAnnotationScanner.scan(pack);
         for(ClassCacheAnnInfo classCacheAnnInfo : classCacheAnnInfoList){
@@ -64,6 +76,7 @@ public class CacheInterceptor {
         CacheProxyHandler handler = new CacheProxyHandler(beanFactory, info);
         enhancer.setCallback(handler);
         Object result = enhancer.create();
+        logger.info("create proxy of class:{}", info.getClazz());
         return result;
     }
 
@@ -78,6 +91,7 @@ public class CacheInterceptor {
                 Class<?> clazz = it.next();
                 Object object = proxyBeanMap.get(clazz);
                 injectorInterface.doInject(object);
+                logger.info("autowired property of class:{}", clazz.getName());
             }
         }
     }

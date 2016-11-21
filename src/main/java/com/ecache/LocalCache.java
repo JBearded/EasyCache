@@ -39,15 +39,14 @@ public class LocalCache extends AbstractCache{
     public <T> T set(String key, T value, int expireSeconds){
         if(key == null){
             throw new NullPointerException("key can not be null");
-        }else if(value != null){
-            hashLock.lock(key);
-            try{
-                SoftLocalValue<T> localValue = new SoftLocalValue<>(value, expireSeconds);
-                caches.put(key, localValue);
-                logger.info("local cache set key:{} value:{}", key, value);
-            }finally {
-                hashLock.unlock(key);
-            }
+        }
+        hashLock.lock(key);
+        try{
+            SoftLocalValue<T> localValue = new SoftLocalValue<>(value, expireSeconds);
+            caches.put(key, localValue);
+            logger.info("local cache set key:{} value:{}", key, value);
+        }finally {
+            hashLock.unlock(key);
         }
         return value;
     }
@@ -63,9 +62,7 @@ public class LocalCache extends AbstractCache{
             if(result == null){
                 logger.info("local cache get key:{} null and reload", key);
                 caches.remove(key);
-                if(handler != null){
-                    result = set(key, handler.getData(), expiredSeconds);
-                }
+                result = (handler == null) ? null : set(key, handler.getData(), expiredSeconds);
             }
         }finally {
             hashLock.unlock(key);
