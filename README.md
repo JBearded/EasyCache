@@ -256,10 +256,6 @@ CacheInterceptor的run方法, 会扫描包下的所有带有缓存注解的类, 
 有人可能担心锁是否影响了EasyCache的缓存访问性能, 是的, 加锁确实会影响性能. 但是这个锁是细颗粒度的, 它不会影响不同key的访问, 只会阻塞相同key在线程并发下的get访问.
 
 
-## 在通用框架中的使用
-
-* spring: https://github.com/JBearded/EasyCache-Spring-Sample.git
-
 
 
 
