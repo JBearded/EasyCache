@@ -1,6 +1,6 @@
 package com.test;
 
-import com.ecache.annotation.LocalCache;
+import com.ecache.annotation.Cache;
 import com.ecache.annotation.RemoteCache;
 
 import java.util.Arrays;
@@ -21,7 +21,7 @@ public class UserService {
         userMap.put(3, new UserInfo(3, "quan", "345"));
     }
 
-    @RemoteCache(key = "userId_$1", expire = 5)
+    @Cache(instance = RedisCache.class, key = "userId_$1", expire = 5)
     public String getUserName(int id) {
         System.out.println("get user name from db");
         UserInfo user = userMap.get(id);
@@ -31,23 +31,10 @@ public class UserService {
         return null;
     }
 
-    @RemoteCache(key = "userId_{$1}", expire = 1)
+    @RemoteCache(key = "userId_{$1}", expire = 5)
     public List<UserInfo> getUserInfo(int id) {
         System.out.println("get user info from db");
         return Arrays.asList(userMap.get(id));
-    }
-
-    @LocalCache(key="userId_{$1.id}_userPw_{$1.pword}", expire = 60)
-    public boolean login(UserInfo info){
-        boolean successful = false;
-        int id = info.getId();
-        if(userMap.containsKey(id)){
-            UserInfo dbUserInfo = userMap.get(id);
-            if(info.getPword().equals(dbUserInfo.getPword())){
-                successful = true;
-            }
-        }
-        return successful;
     }
 
 }

@@ -1,9 +1,5 @@
 package com.ecache;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * 没有命中缓存时, 获取数据源的处理器
  * @author 谢俊权
@@ -11,11 +7,17 @@ import java.util.List;
  */
 public abstract class MissCacheHandler<T> {
 
-    public List<Object> params = new ArrayList<>();
+    public Object[] params;
 
-    public MissCacheHandler(){}
+    public MissCacheHandler(){
+        this.params = new Object[]{};
+    }
     public MissCacheHandler(Object... ps){
-        params.addAll(Arrays.asList(ps));
+        int length = ps.length, index = 0;
+        this.params = new Object[length];
+        for (Object object : ps) {
+            this.params[index++] = object;
+        }
     }
 
     public abstract T getData();

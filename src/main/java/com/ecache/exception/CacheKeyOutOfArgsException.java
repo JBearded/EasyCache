@@ -1,7 +1,7 @@
 package com.ecache.exception;
 
 /**
- * bean容器中没有找到内置缓存对象
+ * 指定的$number超出参数个数
  *
  * @author xiejunquan
  * @create 2016/11/21 15:30
