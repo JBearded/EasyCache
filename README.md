@@ -104,8 +104,8 @@
                     new MissCacheHandler<Map<String , PageData<UserInfo>>>(biz, moduleId) {
                         @Override
                         public Map<String , PageData<UserInfo>> getData() {
-                            String biz = (String) params.get(0);
-                            int moduleId = (int) params.get(1);
+                            String biz = (String) params[0];
+                            int moduleId = (int) params[1];
                             return pageDao.pageMap(biz, moduleId);
                     }
             });
