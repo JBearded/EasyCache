@@ -1,6 +1,6 @@
 package com.ecache.annotation;
 
-import com.ecache.CacheInterface;
+import com.ecache.EasyCache;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Cache {
 
-    Class<? extends CacheInterface> instance();
+    Class<? extends EasyCache> instance();
 
     String id() default "";
 

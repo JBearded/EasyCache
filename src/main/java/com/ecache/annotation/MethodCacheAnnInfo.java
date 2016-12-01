@@ -1,7 +1,6 @@
 package com.ecache.annotation;
 
-import com.ecache.AbstractCache;
-import com.ecache.CacheInterface;
+import com.ecache.EasyCache;
 
 import java.lang.reflect.Method;
 
@@ -19,8 +18,8 @@ public class MethodCacheAnnInfo {
     /**
      * 注解方法使用的缓存类型
      */
-    private Class<? extends AbstractCache> innerCacheClazz;
-    private Class<? extends CacheInterface> outerCacheClazz;
+    private Class<? extends EasyCache> cacheClazz;
+
 
     /**
      * 缓存实例id
@@ -39,14 +38,11 @@ public class MethodCacheAnnInfo {
 
     private boolean avoidOverload;
 
-    private boolean isInnerCache;
-
     public MethodCacheAnnInfo(Builder builder) {
         this.method = builder.method;
-        this.innerCacheClazz = builder.innerCacheClazz;
-        this.outerCacheClazz = builder.outerCacheClazz;
         this.id = builder.id;
         this.key = builder.key;
+        this.cacheClazz = builder.cacheClazz;
         this.expiredSeconds = builder.expiredSeconds;
         this.avoidOverload = builder.avoidOverload;
     }
@@ -55,12 +51,8 @@ public class MethodCacheAnnInfo {
         return method;
     }
 
-    public Class<? extends AbstractCache> getInnerCacheClazz() {
-        return innerCacheClazz;
-    }
-
-    public Class<? extends CacheInterface> getOuterCacheClazz() {
-        return outerCacheClazz;
+    public Class<? extends EasyCache> getCacheClazz() {
+        return cacheClazz;
     }
 
     public String getId() {
@@ -79,14 +71,6 @@ public class MethodCacheAnnInfo {
         return avoidOverload;
     }
 
-    public boolean isInnerCache() {
-        return (this.innerCacheClazz != null) ? true : false;
-    }
-
-    public boolean isOuterCache(){
-        return (this.outerCacheClazz != null) ? true : false;
-    }
-
     @Override
     public String toString() {
         return new StringBuilder(super.toString())
@@ -94,7 +78,6 @@ public class MethodCacheAnnInfo {
                 .append("_").append(key)
                 .append("_").append(method)
                 .append("_").append(expiredSeconds)
-                .append("_").append(isInnerCache)
                 .append("_").append(avoidOverload)
                 .toString();
     }
@@ -109,8 +92,7 @@ public class MethodCacheAnnInfo {
         /**
          * 注解方法使用的缓存类型
          */
-        private Class<? extends AbstractCache> innerCacheClazz;
-        private Class<? extends CacheInterface> outerCacheClazz;
+        private Class<? extends EasyCache> cacheClazz;
 
         /**
          * 缓存实例id
@@ -134,13 +116,8 @@ public class MethodCacheAnnInfo {
             return this;
         }
 
-        public Builder innerCacheClazz(Class<? extends AbstractCache> cache){
-            this.innerCacheClazz = cache;
-            return this;
-        }
-
-        public Builder outerCacheClazz(Class<? extends CacheInterface> cache){
-            this.outerCacheClazz = cache;
+        public Builder cacheClazz(Class<? extends EasyCache> cache){
+            this.cacheClazz = cache;
             return this;
         }
 

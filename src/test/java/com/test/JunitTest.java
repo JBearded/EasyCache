@@ -80,14 +80,12 @@ public class JunitTest {
     @Test
     public void annotationTest() throws Exception{
 
-        RemoteCache remoteCache = getRemoteCache();
+        CacheRegistrar remoteCache = getRemoteCache();
         LocalCache localCache = getLocalCache();
-        CacheInterface cacheInterface = getCacheInterface();
 
         CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
         cacheBeanFactory.set(LocalCache.class, localCache);
         cacheBeanFactory.set(RemoteCache.class, remoteCache);
-        cacheBeanFactory.set(RedisCache.class, "localRedisCache", cacheInterface);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
         cacheInterceptor.run();
 
@@ -181,18 +179,14 @@ public class JunitTest {
                 .clearSchedulerIntervalSeconds(60*60)
                 .build();
 
-        RemoteCache remoteCache = new RemoteCache(config, getCacheInterface());
-        return remoteCache;
-    }
-
-    public CacheInterface getCacheInterface(){
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxTotal(100);
         jedisPoolConfig.setMaxIdle(20);
         jedisPoolConfig.setMinIdle(20);
         jedisPoolConfig.setMaxWaitMillis(1000*5);
-        RedisCache redisCache = new RedisCache(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-        return redisCache;
+
+        RemoteCache remoteCache = new RedisCache(config, jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+        return remoteCache;
     }
 
     static class MyValue{

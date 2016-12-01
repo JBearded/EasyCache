@@ -1,75 +1,12 @@
 package com.ecache;
 
-import com.alibaba.fastjson.JSON;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
- * 远程缓存
- * @author 谢俊权
- * @create 2016/7/9 16:31
+ * @author xiejunquan
+ * @create 2016/12/1 17:46
  */
-public class RemoteCache extends AbstractCache{
+public abstract class RemoteCache extends CacheRegistrar {
 
-    private static final Logger logger = LoggerFactory.getLogger(RemoteCache.class);
-
-    private CacheInterface cacheInterface;
-
-    public RemoteCache(CacheInterface cacheInterface) {
-        this(new CacheConfig.Builder().build(), cacheInterface);
-    }
-
-    public RemoteCache(CacheConfig config, CacheInterface cacheInterface) {
+    public RemoteCache(CacheConfig config) {
         super(config);
-        this.cacheInterface = cacheInterface;
-    }
-
-    @Override
-    public <T> T set(String key, T value, int expiredSeconds) {
-        if(key == null){
-            throw new NullPointerException("key can not be null");
-        }
-        String json =JSON.toJSONString(value);
-        cacheInterface.set(key, json, expiredSeconds);
-        logger.info("remote cache set key:{} value:{}", key, value);
-        return value;
-    }
-
-    public <T> T get(String key, CacheType type){
-        CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
-        MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
-        int expiredSeconds = (cachePolicy == null)
-                ? cacheConfig.getDefaultExpiredSeconds()
-                : cachePolicy.getExpiredSeconds();
-        return get(key, expiredSeconds, type, handler);
-    }
-
-    @Override
-    public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
-        return get(key, expiredSeconds, new CacheType(clazz){}, handler);
-    }
-
-    public <T> T get(String key, int expiredSeconds, CacheType type, MissCacheHandler<T> handler) {
-        String result = cacheInterface.get(key);
-        if(result == null && handler != null){
-            logger.info("remote cache get key:{} null and reload", key);
-            if(!cacheConfig.isAvoidServerOverload()){
-                return set(key, handler.getData(), expiredSeconds);
-            }
-            hashLock.lock(key);
-            try{
-                result = cacheInterface.get(key);
-                if(result == null){
-                    return set(key, handler.getData(), expiredSeconds);
-                }
-            }finally {
-                hashLock.unlock(key);
-            }
-        }
-        logger.info("remote cache get key:{} value:{}", key, result);
-        return (type.actualType instanceof Class)
-                ? (T) JSON.parseObject(result, (Class)type.actualType)
-                : (T) JSON.parseObject(result, type.actualType);
-
     }
 }

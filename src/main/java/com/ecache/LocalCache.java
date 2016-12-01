@@ -13,15 +13,14 @@ import java.util.concurrent.ConcurrentMap;
  * @author 谢俊权
  * @create  
  */
-public class LocalCache extends AbstractCache{
+public class LocalCache extends CacheRegistrar {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalCache.class);
 
     private ConcurrentMap<String, SoftLocalValue> caches = new ConcurrentHashMap<>();
 
     public LocalCache() {
-        super();
-        clearScheduler();
+        this(new CacheConfig.Builder().build());
     }
 
     public LocalCache(CacheConfig config){
@@ -29,10 +28,19 @@ public class LocalCache extends AbstractCache{
         clearScheduler();
     }
 
-    @Deprecated
     @Override
     public <T> void register(String key, CachePolicy<T> cachePolicy) {
         super.register(key, cachePolicy);
+    }
+
+    @Override
+    public String setString(String key, String value, int expiredSeconds) {
+        return set(key, value, expiredSeconds);
+    }
+
+    @Override
+    public String getString(String key) {
+        return get(key, String.class);
     }
 
     @Override

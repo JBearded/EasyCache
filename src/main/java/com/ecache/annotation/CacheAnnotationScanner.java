@@ -1,5 +1,7 @@
 package com.ecache.annotation;
 
+import com.ecache.LocalCache;
+import com.ecache.RemoteCache;
 import com.ecache.utils.PackageScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +32,8 @@ public class CacheAnnotationScanner {
         for(Class<?> clazz : classSet){
             List<MethodCacheAnnInfo> annList = new ArrayList<>();
             for(Method method : clazz.getDeclaredMethods()){
-                LocalCache localCacheAn = method.getAnnotation(LocalCache.class);
-                RemoteCache remoteCacheAn = method.getAnnotation(RemoteCache.class);
+                com.ecache.annotation.LocalCache localCacheAn = method.getAnnotation(com.ecache.annotation.LocalCache.class);
+                com.ecache.annotation.RemoteCache remoteCacheAn = method.getAnnotation(com.ecache.annotation.RemoteCache.class);
                 Cache cacheAn = method.getAnnotation(Cache.class);
                 MethodCacheAnnInfo methodCacheAnnInfo = null;
                 if(cacheAn != null){
@@ -54,10 +56,10 @@ public class CacheAnnotationScanner {
         return result;
     }
 
-    private static MethodCacheAnnInfo getLocalCache(Method method, LocalCache localCacheAn){
+    private static MethodCacheAnnInfo getLocalCache(Method method, com.ecache.annotation.LocalCache localCacheAn){
         MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
                 .method(method)
-                .innerCacheClazz(com.ecache.LocalCache.class)
+                .innerCacheClazz(LocalCache.class)
                 .key(localCacheAn.key())
                 .expiredSeconds(localCacheAn.expire())
                 .avoidOverload(false)
@@ -65,10 +67,10 @@ public class CacheAnnotationScanner {
         return cacheAnnInfo;
     }
 
-    private static MethodCacheAnnInfo getRemoteCache(Method method, RemoteCache remoteCacheAn){
+    private static MethodCacheAnnInfo getRemoteCache(Method method, com.ecache.annotation.RemoteCache remoteCacheAn){
         MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
                 .method(method)
-                .innerCacheClazz(com.ecache.RemoteCache.class)
+                .innerCacheClazz(RemoteCache.class)
                 .key(remoteCacheAn.key())
                 .expiredSeconds(remoteCacheAn.expire())
                 .avoidOverload(remoteCacheAn.avoidOverload())

@@ -1,16 +1,13 @@
 package com.ecache.proxy;
 
-import com.alibaba.fastjson.JSON;
-import com.ecache.AbstractCache;
-import com.ecache.CacheInterface;
 import com.ecache.CacheType;
+import com.ecache.EasyCache;
 import com.ecache.RemoteCache;
 import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
 import com.ecache.exception.CacheKeyOutOfArgsException;
 import com.ecache.exception.InnerCacheObjectNotFoundException;
-import com.ecache.exception.OuterCacheObjectNotFoundException;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import org.slf4j.Logger;
@@ -157,32 +154,17 @@ public class CacheProxyHandler implements MethodInterceptor {
     }
 
     /**
-     * 获取缓存值
-     * @param methodCacheAnnInfo    方法缓存注解信息
-     * @param key   方法缓存的key
-     * @return
-     */
-    private Object getCacheValue(MethodCacheAnnInfo methodCacheAnnInfo, String key){
-        if(methodCacheAnnInfo.isOuterCache()){
-            return getOuterCacheValue(methodCacheAnnInfo, key);
-        }else if(methodCacheAnnInfo.isInnerCache()){
-            return getInnerCacheValue(methodCacheAnnInfo, key);
-        }
-        return null;
-    }
-
-    /**
      * 通过内部缓存获取缓存数据（内部缓存：@LocalCache和@RemoteCache注解用的缓存）
      * @param methodCacheInfo    方法缓存注解信息
      * @param key   方法缓存key
      * @return
      */
-    private Object getInnerCacheValue(
+    private Object getCacheValue(
             MethodCacheAnnInfo methodCacheInfo,
             String key){
 
-        Class<? extends AbstractCache> cacheClazz = methodCacheInfo.getInnerCacheClazz();
-        AbstractCache cacheObject = getInnerCacheObject(cacheClazz);
+        Class<? extends EasyCache> cacheClazz = methodCacheInfo.getCacheClazz();
+        EasyCache cacheObject = getCacheObject(cacheClazz);
 
         Method method = methodCacheInfo.getMethod();
         Type type = method.getGenericReturnType();
@@ -196,74 +178,27 @@ public class CacheProxyHandler implements MethodInterceptor {
     }
 
     /**
-     * 通过外部缓存获取缓存数据（外部缓存：@Cache注解用的缓存）
-     * @param methodCacheAnnInfo    方法缓存注解信息
-     * @param key   方法缓存key
-     * @return
-     */
-    private Object getOuterCacheValue(MethodCacheAnnInfo methodCacheAnnInfo, String key){
-        Class<? extends CacheInterface> cacheClazz = methodCacheAnnInfo.getOuterCacheClazz();
-        String id = methodCacheAnnInfo.getId();
-        CacheInterface cacheObject = getOuterCacheObject(cacheClazz, id);
-
-        String value = cacheObject.get(key);
-        if(value != null){
-            Method method = methodCacheAnnInfo.getMethod();
-            Type type = method.getGenericReturnType();
-            if(!(type instanceof ParameterizedType)){
-                return JSON.parseObject(value, method.getReturnType());
-            }
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            CacheType cacheType = new CacheType(parameterizedType){};
-            return JSON.parseObject(value, cacheType.actualType);
-        }
-        return null;
-    }
-
-    /**
      * 保存结果到缓存中
-     * @param info  方法注解信息
+     * @param methodCacheInfo  方法注解信息
      * @param key   缓存key
      * @param value 缓存值
      * @return
      */
-    private Object setCacheValue(MethodCacheAnnInfo info, String key, Object value){
-        int expiredSeconds = info.getExpiredSeconds();
-        if(info.isInnerCache()){
-            AbstractCache cacheObject = getInnerCacheObject(info.getInnerCacheClazz());
-            cacheObject.set(key, value, expiredSeconds);
-        }else if(info.isOuterCache()){
-            CacheInterface cacheObject = getOuterCacheObject(info.getOuterCacheClazz(), info.getId());
-            cacheObject.set(key, JSON.toJSONString(value), expiredSeconds);
-        }
-        return value;
+    private Object setCacheValue(MethodCacheAnnInfo methodCacheInfo, String key, Object value){
+
+        Class<? extends EasyCache> cacheClazz = methodCacheInfo.getCacheClazz();
+        int expiredSeconds = methodCacheInfo.getExpiredSeconds();
+        EasyCache cacheObject = getCacheObject(cacheClazz);
+        return cacheObject.set(key, value, expiredSeconds);
     }
 
     /**
-     * 获取容器中的外部缓存对象(@Cache中使用到的缓存对像)
-     * @param cacheClazz    缓存对象类型
-     * @param id    缓存对象的id
-     * @return
-     */
-    private CacheInterface getOuterCacheObject(Class<? extends CacheInterface> cacheClazz, String id){
-        CacheInterface cacheObject = (CacheInterface) ((id == null || "".equals(id.trim()))
-                        ? beanFactory.get(cacheClazz)
-                        : beanFactory.get(cacheClazz, id));
-
-        if(cacheObject == null){
-            String errorMessage = "failed to get outer cache object, class:" + cacheClazz;
-            throw new OuterCacheObjectNotFoundException(errorMessage);
-        }
-        return cacheObject;
-    }
-
-    /**
-     * 获取容器中的外部缓存对象(@RemoteCache和@LocalCache中使用到的缓存对像)
+     * 获取容器中的缓存对象
      * @param cacheClazz    缓存对象类型
      * @return
      */
-    private AbstractCache getInnerCacheObject(Class<? extends AbstractCache> cacheClazz){
-        AbstractCache cacheObject = beanFactory.get(cacheClazz);
+    private EasyCache getCacheObject(Class<? extends EasyCache> cacheClazz){
+        EasyCache cacheObject = beanFactory.get(cacheClazz);
         if(cacheObject == null){
             String errorMessage = "failed to get inner cache object, class:" + cacheClazz;
             throw new InnerCacheObjectNotFoundException(errorMessage);
