@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author 谢俊权
  * @create  
  */
-public class LocalCache extends CacheRegistrar {
+public class LocalCache extends AbstractCacheRegistrar {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalCache.class);
 
@@ -26,21 +26,6 @@ public class LocalCache extends CacheRegistrar {
     public LocalCache(CacheConfig config){
         super(config);
         clearScheduler();
-    }
-
-    @Override
-    public <T> void register(String key, CachePolicy<T> cachePolicy) {
-        super.register(key, cachePolicy);
-    }
-
-    @Override
-    public String setString(String key, String value, int expiredSeconds) {
-        return set(key, value, expiredSeconds);
-    }
-
-    @Override
-    public String getString(String key) {
-        return get(key, String.class);
     }
 
     @Override
@@ -60,13 +45,34 @@ public class LocalCache extends CacheRegistrar {
     }
 
     @Override
-    public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
+    public <T> T get(String key, Class<T> clazz) {
+        return get(key, new CacheType<T>(clazz){});
+    }
 
+    @Override
+    public <T> T get(String key, CacheType<T> type){
+        CachePolicy<T> cachePolicy = cachePolicyRegister.get(key);
+        MissCacheHandler<T> handler = (cachePolicy == null) ? null : cachePolicy.getMissCacheHandler();
+        int expiredSeconds = (cachePolicy == null)
+                ? cacheConfig.getDefaultExpiredSeconds()
+                : cachePolicy.getExpiredSeconds();
+        return get(key, expiredSeconds, type, handler);
+    }
+
+    @Override
+    public <T> T get(String key, int expiredSeconds, Class<T> clazz, MissCacheHandler<T> handler) {
+        return get(key, expiredSeconds, new CacheType<T>(clazz){}, handler);
+    }
+
+    @Override
+    public <T> T get(String key, int expiredSeconds, CacheType<T> type, MissCacheHandler<T> handler) {
         hashLock.lock(key);
         T result = null;
         try{
             SoftLocalValue<T> localValue = caches.get(key);
-            result = (localValue == null || localValue.get() == null || localValue.get().isExpired()) ? null : (T) localValue.get().value;
+            result = (localValue == null || localValue.get() == null || localValue.get().isExpired())
+                    ? null
+                    : (T) localValue.get().value;
             if(result == null){
                 logger.info("local cache get key:{} null and reload", key);
                 caches.remove(key);

@@ -7,8 +7,7 @@ import com.ecache.utils.HashLock;
  * @author xiejunquan
  * @create 2016/12/1 16:00
  */
-public abstract class AbstractEasyCache implements EasyCache{
-
+public abstract class AbstractEasyCache implements EasyCache, RemoteCacheSource {
 
     /**
      * 缓存服务相关的配置信息
@@ -27,7 +26,8 @@ public abstract class AbstractEasyCache implements EasyCache{
 
     @Override
     public <T> T set(String key, T value, int expiredSeconds) {
-        setString(key, JSON.toJSONString(value), expiredSeconds);
+        String json = JSON.toJSONString(value);
+        setString(key, json, expiredSeconds);
         return value;
     }
 
@@ -47,7 +47,7 @@ public abstract class AbstractEasyCache implements EasyCache{
     }
 
     @Override
-    public <T> T get(String key, int expiredSeconds, CacheType type, MissCacheHandler<T> handler) {
+    public <T> T get(String key, int expiredSeconds, CacheType<T> type, MissCacheHandler<T> handler) {
         String result = getString(key);
         if(result == null && handler != null){
             if(!cacheConfig.isAvoidServerOverload()){
@@ -66,5 +66,9 @@ public abstract class AbstractEasyCache implements EasyCache{
         return (type.actualType instanceof Class)
                 ? (T) JSON.parseObject(result, (Class)type.actualType)
                 : (T) JSON.parseObject(result, type.actualType);
+    }
+
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
     }
 }

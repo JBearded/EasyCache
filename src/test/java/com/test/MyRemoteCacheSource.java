@@ -1,25 +1,19 @@
 package com.test;
 
-import com.ecache.AbstractEasyCache;
-import com.ecache.CacheConfig;
+import com.ecache.RemoteCacheSource;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 /**
- * @author 谢俊权
- * @create 2016/7/12 13:35
+ * @author xiejunquan
+ * @create 2016/12/2 13:54
  */
-public class RedisCache extends AbstractEasyCache {
+public class MyRemoteCacheSource implements RemoteCacheSource {
 
     private JedisPool jedisPool;
 
-    public RedisCache(JedisPoolConfig config, String ip, int port, int timeout) {
-        this(null, config, ip, port, timeout);
-    }
-
-    public RedisCache(CacheConfig cacheConfig, JedisPoolConfig jedisPoolConfig, String ip, int port, int timeout) {
-        super(cacheConfig);
+    public MyRemoteCacheSource(JedisPoolConfig jedisPoolConfig, String ip, int port, int timeout) {
         this.jedisPool = new JedisPool(jedisPoolConfig, ip, port, timeout);
     }
 

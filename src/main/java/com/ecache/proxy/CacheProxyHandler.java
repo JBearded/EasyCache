@@ -7,7 +7,7 @@ import com.ecache.annotation.ClassCacheAnnInfo;
 import com.ecache.annotation.MethodCacheAnnInfo;
 import com.ecache.bean.BeanFactoryInterface;
 import com.ecache.exception.CacheKeyOutOfArgsException;
-import com.ecache.exception.InnerCacheObjectNotFoundException;
+import com.ecache.exception.CacheObjectNotFoundException;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import org.slf4j.Logger;
@@ -201,7 +201,7 @@ public class CacheProxyHandler implements MethodInterceptor {
         EasyCache cacheObject = beanFactory.get(cacheClazz);
         if(cacheObject == null){
             String errorMessage = "failed to get inner cache object, class:" + cacheClazz;
-            throw new InnerCacheObjectNotFoundException(errorMessage);
+            throw new CacheObjectNotFoundException(errorMessage);
         }
         return cacheObject;
     }

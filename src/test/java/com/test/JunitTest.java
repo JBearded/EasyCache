@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JunitTest {
 
-
     @Ignore
     @Test
     public void registerTest() throws Exception{
@@ -76,16 +75,18 @@ public class JunitTest {
         System.out.println(localIntervalMyValue.getId());
     }
 
-    @Ignore
     @Test
     public void annotationTest() throws Exception{
 
-        CacheRegistrar remoteCache = getRemoteCache();
+        RemoteCacheSource remoteCacheSource = getRemoteCacheSource();
+        RemoteCache remoteCache = getRemoteCache(remoteCacheSource);
         LocalCache localCache = getLocalCache();
+        EasyCache easyCache = getRedisCache();
 
         CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
         cacheBeanFactory.set(LocalCache.class, localCache);
         cacheBeanFactory.set(RemoteCache.class, remoteCache);
+        cacheBeanFactory.set(RedisCache.class, easyCache);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
         cacheInterceptor.run();
 
@@ -113,7 +114,8 @@ public class JunitTest {
     @Test
     public void threadTest() throws Exception {
 
-        final RemoteCache remoteCache = getRemoteCache();
+        final RemoteCacheSource remoteCacheSource = getRemoteCacheSource();
+        final RemoteCache remoteCache = getRemoteCache(remoteCacheSource);
 
         AtomicInteger dbNumber = new AtomicInteger(0);
         String key = "cache-thread-key";
@@ -169,7 +171,21 @@ public class JunitTest {
         return localCache;
     }
 
-    public RemoteCache getRemoteCache(){
+    public RemoteCache getRemoteCache(com.ecache.RemoteCacheSource remoteCacheSource){
+        CacheConfig config = new CacheConfig.Builder()
+                .defaultExpiredSeconds(60)
+                .schedulerCorePoolSize(64)
+                .lockSegments(32)
+                .lockIsFair(false)
+                .avoidServerOverload(true)
+                .clearSchedulerIntervalSeconds(60*60)
+                .build();
+
+        RemoteCache remoteCache = new RemoteCache(config, remoteCacheSource);
+        return remoteCache;
+    }
+
+    public com.ecache.RemoteCacheSource getRemoteCacheSource(){
         CacheConfig config = new CacheConfig.Builder()
                 .defaultExpiredSeconds(60)
                 .schedulerCorePoolSize(64)
@@ -185,9 +201,30 @@ public class JunitTest {
         jedisPoolConfig.setMinIdle(20);
         jedisPoolConfig.setMaxWaitMillis(1000*5);
 
-        RemoteCache remoteCache = new RedisCache(config, jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-        return remoteCache;
+        RemoteCacheSource remoteCacheSource = new MyRemoteCacheSource(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+        return remoteCacheSource;
     }
+
+    public EasyCache getRedisCache(){
+        CacheConfig config = new CacheConfig.Builder()
+                .defaultExpiredSeconds(60)
+                .schedulerCorePoolSize(64)
+                .lockSegments(32)
+                .lockIsFair(false)
+                .avoidServerOverload(true)
+                .clearSchedulerIntervalSeconds(60*60)
+                .build();
+
+        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+        jedisPoolConfig.setMaxTotal(100);
+        jedisPoolConfig.setMaxIdle(20);
+        jedisPoolConfig.setMinIdle(20);
+        jedisPoolConfig.setMaxWaitMillis(1000*5);
+
+        EasyCache redisCache = new RedisCache(config, jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
+        return redisCache;
+    }
+
 
     static class MyValue{
         private int id;

@@ -59,7 +59,7 @@ public class CacheAnnotationScanner {
     private static MethodCacheAnnInfo getLocalCache(Method method, com.ecache.annotation.LocalCache localCacheAn){
         MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
                 .method(method)
-                .innerCacheClazz(LocalCache.class)
+                .cacheClazz(LocalCache.class)
                 .key(localCacheAn.key())
                 .expiredSeconds(localCacheAn.expire())
                 .avoidOverload(false)
@@ -70,7 +70,7 @@ public class CacheAnnotationScanner {
     private static MethodCacheAnnInfo getRemoteCache(Method method, com.ecache.annotation.RemoteCache remoteCacheAn){
         MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
                 .method(method)
-                .innerCacheClazz(RemoteCache.class)
+                .cacheClazz(RemoteCache.class)
                 .key(remoteCacheAn.key())
                 .expiredSeconds(remoteCacheAn.expire())
                 .avoidOverload(remoteCacheAn.avoidOverload())
@@ -81,7 +81,7 @@ public class CacheAnnotationScanner {
     private static MethodCacheAnnInfo getCache(Method method, Cache cacheAn){
         MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
                 .method(method)
-                .outerCacheClazz(cacheAn.instance())
+                .cacheClazz(cacheAn.instance())
                 .id(cacheAn.id())
                 .key(cacheAn.key())
                 .expiredSeconds(cacheAn.expire())
