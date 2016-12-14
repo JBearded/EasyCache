@@ -2,18 +2,21 @@ package com.ecache.proxy;
 
 import com.ecache.CacheType;
 import com.ecache.EasyCache;
-import com.ecache.RemoteCache;
-import com.ecache.annotation.ClassCacheAnnInfo;
-import com.ecache.annotation.MethodCacheAnnInfo;
+import com.ecache.annotation.CacheAnnotationInfo;
+import com.ecache.annotation.ClassCacheAnInfo;
+import com.ecache.annotation.MethodCacheAnInfo;
+import com.ecache.annotation.NullCacheInstance;
 import com.ecache.bean.BeanFactoryInterface;
 import com.ecache.exception.CacheKeyOutOfArgsException;
 import com.ecache.exception.CacheObjectNotFoundException;
+import com.ecache.exception.MissDefaultCacheException;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,27 +36,27 @@ public class CacheProxyHandler implements MethodInterceptor {
     /**
      * 类的EasyCache注解相关信息
      */
-    private ClassCacheAnnInfo classCacheAnnInfo;
+    private ClassCacheAnInfo classCacheAnInfo;
 
-    public CacheProxyHandler(BeanFactoryInterface beanFactory, ClassCacheAnnInfo annInfo) {
+    public CacheProxyHandler(BeanFactoryInterface beanFactory, ClassCacheAnInfo annInfo) {
         this.beanFactory = beanFactory;
-        this.classCacheAnnInfo = annInfo;
+        this.classCacheAnInfo = annInfo;
     }
 
     @Override
     public Object intercept(Object object, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
 
-        MethodCacheAnnInfo methodCacheAnnInfo = getMethodAnnInfo(method);
-        if(methodCacheAnnInfo == null){
+        MethodCacheAnInfo methodCacheAnInfo = getMethodAnnInfo(method);
+        if(methodCacheAnInfo == null){
             return methodProxy.invokeSuper(object, args);
         }
-        String key = getCacheKey(methodCacheAnnInfo, args);
-        Object result = getCacheValue(methodCacheAnnInfo, key);
+        String key = getCacheKey(methodCacheAnInfo, args);
+        Object result = getCacheValue(methodCacheAnInfo, key);
         if(result != null){
             return result;
         }
         result = methodProxy.invokeSuper(object, args);
-        setCacheValue(methodCacheAnnInfo, key, result);
+        setCacheValue(methodCacheAnInfo, key, result);
         return result;
     }
 
@@ -62,8 +65,8 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param method 被调用的方法
      * @return 方法注解信息
      */
-    private MethodCacheAnnInfo getMethodAnnInfo(Method method){
-        for(MethodCacheAnnInfo info : classCacheAnnInfo.getMethodAnnInfoList()){
+    private MethodCacheAnInfo getMethodAnnInfo(Method method){
+        for(MethodCacheAnInfo info : classCacheAnInfo.getMethodAnnInfoList()){
             if(method.equals(info.getMethod())){
                 return info;
             }
@@ -77,9 +80,9 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param args  方法参数数组
      * @return  缓存key
      */
-    private String getCacheKey(MethodCacheAnnInfo info, Object[] args) {
+    private String getCacheKey(MethodCacheAnInfo info, Object[] args) {
 
-        Class<?> clazz = classCacheAnnInfo.getClazz();
+        Class<?> clazz = classCacheAnInfo.getClazz();
         Method method = info.getMethod();
         String annotationKey = info.getKey();
         String prefixKey = getPrefixKey(clazz, method);
@@ -147,10 +150,11 @@ public class CacheProxyHandler implements MethodInterceptor {
             return field.get(object);
         }catch (NoSuchFieldException ne){
             logger.error("does not exist attribute {} in class {}", fieldName, paramClass.getName(), ne);
+            throw new RuntimeException(ne);
         }catch (IllegalAccessException ae){
             logger.error("get field {} error in class {}", fieldName, paramClass.getName(), ae);
+            throw new RuntimeException(ae);
         }
-        return null;
     }
 
     /**
@@ -160,21 +164,21 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @return
      */
     private Object getCacheValue(
-            MethodCacheAnnInfo methodCacheInfo,
+            MethodCacheAnInfo methodCacheInfo,
             String key){
 
         Class<? extends EasyCache> cacheClazz = methodCacheInfo.getCacheClazz();
-        EasyCache cacheObject = getCacheObject(cacheClazz);
+        Class<? extends EasyCache> targetCacheClazz =
+                (cacheClazz == null || cacheClazz.equals(NullCacheInstance.class))
+                        ? getDefaultCacheInstance() : cacheClazz;
+        EasyCache cacheObject = getCacheObject(targetCacheClazz);
 
         Method method = methodCacheInfo.getMethod();
         Type type = method.getGenericReturnType();
         ParameterizedType parameterizedType = (type instanceof ParameterizedType) ? (ParameterizedType) type : null;
-        if(parameterizedType != null && cacheObject instanceof RemoteCache){
-            RemoteCache remoteCache = (RemoteCache) cacheObject;
-            return remoteCache.get(key, new CacheType(parameterizedType) {});
-        }
-        Class<Object> returnClazz = (Class<Object>) ((parameterizedType != null) ? parameterizedType.getRawType() : type);
-        return cacheObject.get(key, returnClazz);
+        return (parameterizedType == null)
+                ? cacheObject.get(key, (method.getReturnType()))
+                : cacheObject.get(key, new CacheType(parameterizedType) {});
     }
 
     /**
@@ -184,12 +188,24 @@ public class CacheProxyHandler implements MethodInterceptor {
      * @param value 缓存值
      * @return
      */
-    private Object setCacheValue(MethodCacheAnnInfo methodCacheInfo, String key, Object value){
+    private Object setCacheValue(MethodCacheAnInfo methodCacheInfo, String key, Object value){
 
         Class<? extends EasyCache> cacheClazz = methodCacheInfo.getCacheClazz();
+        Class<? extends EasyCache> targetCacheClazz =
+                (cacheClazz == null || cacheClazz.equals(NullCacheInstance.class))
+                        ? getDefaultCacheInstance() : cacheClazz;
         int expiredSeconds = methodCacheInfo.getExpiredSeconds();
-        EasyCache cacheObject = getCacheObject(cacheClazz);
+        EasyCache cacheObject = getCacheObject(targetCacheClazz);
         return cacheObject.set(key, value, expiredSeconds);
+    }
+
+    private Class<? extends EasyCache> getDefaultCacheInstance(){
+        CacheAnnotationInfo info = CacheAnnotationInfo.getInstance();
+        List defaultCacheList = info.getDefaultCacheList();
+        if(defaultCacheList.isEmpty()){
+            throw new MissDefaultCacheException("must set a default cache instance using @DefaultCache");
+        }
+        return (Class<? extends EasyCache>) defaultCacheList.get(0);
     }
 
     /**

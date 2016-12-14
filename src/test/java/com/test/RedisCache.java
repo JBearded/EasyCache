@@ -2,6 +2,7 @@ package com.test;
 
 import com.ecache.AbstractEasyCache;
 import com.ecache.CacheConfig;
+import com.ecache.annotation.DefaultCache;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -10,6 +11,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * @author 谢俊权
  * @create 2016/7/12 13:35
  */
+@DefaultCache
 public class RedisCache extends AbstractEasyCache {
 
     private JedisPool jedisPool;

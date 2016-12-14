@@ -1,6 +1,6 @@
 package com.ecache.annotation;
 
-import com.ecache.EasyCache;
+import com.ecache.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,11 +15,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Cache {
 
-    Class<? extends EasyCache> instance();
-
-    String id() default "";
+    Class<? extends EasyCache> instance() default NullCacheInstance.class;
 
     String key() default "";
 
-    int expire() default 300;
+    int expired() default 300;
 }

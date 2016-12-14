@@ -4,7 +4,7 @@ package com.ecache;
  * @author xiejunquan
  * @create 2016/12/2 9:42
  */
-public interface RemoteCacheSource {
+public interface EasyCacheSource {
 
     /**
      * 保存String数据到缓存中

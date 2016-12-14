@@ -1,7 +1,8 @@
 package com.ecache.proxy;
 
+import com.ecache.annotation.CacheAnnotationInfo;
 import com.ecache.annotation.CacheAnnotationScanner;
-import com.ecache.annotation.ClassCacheAnnInfo;
+import com.ecache.annotation.ClassCacheAnInfo;
 import com.ecache.bean.BeanFactoryInterface;
 import com.ecache.bean.InjectorInterface;
 import net.sf.cglib.proxy.Enhancer;
@@ -54,11 +55,12 @@ public class CacheInterceptor {
      */
     public void run(String pack){
         logger.info("begin to scan package:{}", pack);
+        CacheAnnotationScanner.scan(pack);
+        List<ClassCacheAnInfo> classCacheAnInfoList = CacheAnnotationInfo.getInstance().getCacheAnInfoList();
         Map<Class<?>, Object> proxyBeanMap = new HashMap<>();
-        List<ClassCacheAnnInfo> classCacheAnnInfoList =  CacheAnnotationScanner.scan(pack);
-        for(ClassCacheAnnInfo classCacheAnnInfo : classCacheAnnInfoList){
-            Class<?> clazz = classCacheAnnInfo.getClazz();
-            Object object = createProxyBean(classCacheAnnInfo);
+        for(ClassCacheAnInfo classCacheAnInfo : classCacheAnInfoList){
+            Class<?> clazz = classCacheAnInfo.getClazz();
+            Object object = createProxyBean(classCacheAnInfo);
             beanFactory.set(clazz, object);
             proxyBeanMap.put(clazz, object);
         }
@@ -70,7 +72,7 @@ public class CacheInterceptor {
      * @param info 注解信息
      * @return  代理类对象
      */
-    private Object createProxyBean(ClassCacheAnnInfo info){
+    private Object createProxyBean(ClassCacheAnInfo info){
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(info.getClazz());
         CacheProxyHandler handler = new CacheProxyHandler(beanFactory, info);

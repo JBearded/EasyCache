@@ -50,9 +50,10 @@ public class CachePolicy<T> {
      * @param intervalSeconds   间隔刷新时间
      * @param handler   数据源获取的处理器
      */
-    public CachePolicy(int delaySeconds, int intervalSeconds, MissCacheHandler<T> handler){
+    public CachePolicy(int delaySeconds, int intervalSeconds, int expiredSeconds,  MissCacheHandler<T> handler){
         this.delaySeconds = delaySeconds;
         this.intervalSeconds = intervalSeconds;
+        this.expiredSeconds = expiredSeconds;
         this.missCacheHandler = handler;
         this.policy = Policy.Timing;
     }

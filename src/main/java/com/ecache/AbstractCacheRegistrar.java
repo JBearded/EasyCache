@@ -11,9 +11,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author xiejunquan
  * @create 2016/12/1 19:07
  */
-public abstract class AbstractCacheRegistrar implements CacheRegistrar, EasyCache{
+public abstract class AbstractCacheRegistrar implements EasyCache{
 
-    private static final Logger logger = LoggerFactory.getLogger(CacheRegistrar.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractCacheRegistrar.class);
 
     /**
      * 定时器, 用于定时刷新缓存

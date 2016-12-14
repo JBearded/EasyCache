@@ -1,27 +1,15 @@
 package com.ecache;
 
 import com.alibaba.fastjson.JSON;
-import com.ecache.utils.HashLock;
 
 /**
  * @author xiejunquan
  * @create 2016/12/1 16:00
  */
-public abstract class AbstractEasyCache implements EasyCache, RemoteCacheSource {
-
-    /**
-     * 缓存服务相关的配置信息
-     */
-    protected CacheConfig cacheConfig;
-
-    /**
-     * 哈希锁, 每个key都有对应的一个锁
-     */
-    protected HashLock hashLock;
+public abstract class AbstractEasyCache extends AbstractCacheRegistrar implements EasyCacheSource {
 
     public AbstractEasyCache(CacheConfig cacheConfig) {
-        this.cacheConfig = (cacheConfig == null) ? new CacheConfig.Builder().build() : cacheConfig;
-        this.hashLock = new HashLock(cacheConfig.getLockSegments(), this.cacheConfig.isLockIsFair());
+        super(cacheConfig);
     }
 
     @Override

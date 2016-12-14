@@ -6,6 +6,9 @@ package com.ecache;
  */
 public interface EasyCache {
 
+
+    <T> void register(String key, CachePolicy<T> cachePolicy);
+
     /**
      * 保存数据到缓存中
      * @param key 缓存key

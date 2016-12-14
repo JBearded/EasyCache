@@ -1,7 +1,7 @@
 package com.ecache.annotation;
 
-import com.ecache.LocalCache;
-import com.ecache.RemoteCache;
+import com.ecache.*;
+import com.ecache.exception.MissDefaultCacheException;
 import com.ecache.utils.PackageScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,69 +25,71 @@ public class CacheAnnotationScanner {
      * @param pack 包名
      * @return 类注解信息列表
      */
-    public static List<ClassCacheAnnInfo> scan(String pack){
+    public static void scan(String pack){
 
-        List<ClassCacheAnnInfo> result = new ArrayList<>();
+        List<ClassCacheAnInfo> cacheAnInfoList = new ArrayList<>();
+        List<Class<?>> defaultCacheList = new ArrayList<>();
         Set<Class<?>> classSet = PackageScanner.getClasses(pack);
+        boolean useDefaultCache = false;
         for(Class<?> clazz : classSet){
-            List<MethodCacheAnnInfo> annList = new ArrayList<>();
+            DefaultCache defaultCache = clazz.getAnnotation(DefaultCache.class);
+            if(defaultCache != null && EasyCache.class.isAssignableFrom(clazz)){
+                defaultCacheList.add(clazz);
+            }
+            List<MethodCacheAnInfo> annList = new ArrayList<>();
             for(Method method : clazz.getDeclaredMethods()){
-                com.ecache.annotation.LocalCache localCacheAn = method.getAnnotation(com.ecache.annotation.LocalCache.class);
-                com.ecache.annotation.RemoteCache remoteCacheAn = method.getAnnotation(com.ecache.annotation.RemoteCache.class);
-                Cache cacheAn = method.getAnnotation(Cache.class);
-                MethodCacheAnnInfo methodCacheAnnInfo = null;
-                if(cacheAn != null){
-                    methodCacheAnnInfo = getCache(method, cacheAn);
-                }else if(remoteCacheAn != null){
-                    methodCacheAnnInfo = getRemoteCache(method, remoteCacheAn);
-                }else if(localCacheAn != null){
-                    methodCacheAnnInfo = getLocalCache(method, localCacheAn);
+                MethodCacheAnInfo cacheAnInfo = getCache(method);
+                if(cacheAnInfo != null){
+                    annList.add(cacheAnInfo);
+                    Class<? extends EasyCache> instance = cacheAnInfo.getCacheClazz();
+                    boolean haveDefaultCache = instance == null || instance.equals(NullCacheInstance.class);
+                    useDefaultCache = (haveDefaultCache) ? true : useDefaultCache;
                 }
-                if(methodCacheAnnInfo != null){
-                    logger.info("scan class, cacheInfo:{}", methodCacheAnnInfo.toString());
-                    annList.add(methodCacheAnnInfo);
+                MethodCacheAnInfo localCacheAnInfo = getLocalCache(method);
+                if(localCacheAnInfo != null){
+                    annList.add(localCacheAnInfo);
                 }
             }
             if(!annList.isEmpty()){
-                ClassCacheAnnInfo classAnnInfo = new ClassCacheAnnInfo(clazz, annList);
-                result.add(classAnnInfo);
+                ClassCacheAnInfo classAnnInfo = new ClassCacheAnInfo(clazz, annList);
+                cacheAnInfoList.add(classAnnInfo);
             }
         }
-        return result;
+        if(defaultCacheList.isEmpty() && useDefaultCache){
+            throw new MissDefaultCacheException("must set a default cache instance using @DefaultCache");
+        }
+        CacheAnnotationInfo info = CacheAnnotationInfo.getInstance();
+        info.cacheAnInfoList.addAll(cacheAnInfoList);
+        info.defaultCacheList.addAll(defaultCacheList);
     }
 
-    private static MethodCacheAnnInfo getLocalCache(Method method, com.ecache.annotation.LocalCache localCacheAn){
-        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
-                .method(method)
-                .cacheClazz(LocalCache.class)
-                .key(localCacheAn.key())
-                .expiredSeconds(localCacheAn.expire())
-                .avoidOverload(false)
-                .buil();
-        return cacheAnnInfo;
-    }
 
-    private static MethodCacheAnnInfo getRemoteCache(Method method, com.ecache.annotation.RemoteCache remoteCacheAn){
-        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
-                .method(method)
-                .cacheClazz(RemoteCache.class)
-                .key(remoteCacheAn.key())
-                .expiredSeconds(remoteCacheAn.expire())
-                .avoidOverload(remoteCacheAn.avoidOverload())
-                .buil();
-        return cacheAnnInfo;
-    }
-
-    private static MethodCacheAnnInfo getCache(Method method, Cache cacheAn){
-        MethodCacheAnnInfo cacheAnnInfo = new MethodCacheAnnInfo.Builder()
+    private static MethodCacheAnInfo getCache(Method method){
+        Cache cacheAn = method.getAnnotation(Cache.class);
+        if(cacheAn == null){
+            return null;
+        }
+        MethodCacheAnInfo cacheAnnInfo = new MethodCacheAnInfo.Builder()
                 .method(method)
                 .cacheClazz(cacheAn.instance())
-                .id(cacheAn.id())
                 .key(cacheAn.key())
-                .expiredSeconds(cacheAn.expire())
+                .expiredSeconds(cacheAn.expired())
                 .buil();
         return cacheAnnInfo;
     }
 
+    private static MethodCacheAnInfo getLocalCache(Method method){
+        LocalCache cacheAn = method.getAnnotation(LocalCache.class);
+        if(cacheAn == null){
+            return null;
+        }
+        MethodCacheAnInfo cacheAnnInfo = new MethodCacheAnInfo.Builder()
+                .method(method)
+                .cacheClazz(com.ecache.LocalCache.class)
+                .key(cacheAn.key())
+                .expiredSeconds(cacheAn.expired())
+                .buil();
+        return cacheAnnInfo;
+    }
 
 }

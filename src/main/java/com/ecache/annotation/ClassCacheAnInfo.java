@@ -6,7 +6,7 @@ import java.util.List;
  * @author 谢俊权
  * @create 2016/7/28 10:40
  */
-public class ClassCacheAnnInfo {
+public class ClassCacheAnInfo {
 
     /**
      * 带有缓存注解的类
@@ -16,13 +16,13 @@ public class ClassCacheAnnInfo {
     /**
      * 方法注解信息列表
      */
-    private List<MethodCacheAnnInfo> methodAnnInfoList;
+    private List<MethodCacheAnInfo> methodAnnInfoList;
 
 
-    public ClassCacheAnnInfo() {
+    public ClassCacheAnInfo() {
     }
 
-    public ClassCacheAnnInfo(Class<?> clazz, List<MethodCacheAnnInfo> methodAnnInfoList) {
+    public ClassCacheAnInfo(Class<?> clazz, List<MethodCacheAnInfo> methodAnnInfoList) {
         this.clazz = clazz;
         this.methodAnnInfoList = methodAnnInfoList;
     }
@@ -35,11 +35,11 @@ public class ClassCacheAnnInfo {
         this.clazz = clazz;
     }
 
-    public List<MethodCacheAnnInfo> getMethodAnnInfoList() {
+    public List<MethodCacheAnInfo> getMethodAnnInfoList() {
         return methodAnnInfoList;
     }
 
-    public void setMethodAnnInfoList(List<MethodCacheAnnInfo> methodAnnInfoList) {
+    public void setMethodAnnInfoList(List<MethodCacheAnInfo> methodAnnInfoList) {
         this.methodAnnInfoList = methodAnnInfoList;
     }
 }

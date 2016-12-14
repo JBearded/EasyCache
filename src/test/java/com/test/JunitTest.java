@@ -21,9 +21,28 @@ public class JunitTest {
 
     @Ignore
     @Test
+    public void getTest(){
+        EasyCache easyCache = getRedisCache();
+        String key = "easy_cache";
+        int expiredSeconds = 60;
+        MyValue value = easyCache.get(
+                key,
+                expiredSeconds,
+                MyValue.class,
+                new MissCacheHandler<MyValue>() {
+                    @Override
+                    public MyValue getData() {
+                        return null;
+                    }
+                }
+        );
+    }
+
+    @Ignore
+    @Test
     public void registerTest() throws Exception{
 
-        LocalCache localCache = getLocalCache();
+        EasyCache localCache = getRedisCache();
 
         AtomicInteger localExpireNumber = new AtomicInteger(0);
         AtomicInteger localIntervalNumber = new AtomicInteger(0);
@@ -50,6 +69,7 @@ public class JunitTest {
         localCache.register(interval_key, new CachePolicy(
                 delaySeconds,
                 intervalSeconds,
+                expiredSeconds,
                 new MissCacheHandler<YourValue>(localIntervalNumber) {
                     @Override
                     public YourValue getData() {
@@ -75,17 +95,15 @@ public class JunitTest {
         System.out.println(localIntervalMyValue.getId());
     }
 
+
     @Test
     public void annotationTest() throws Exception{
 
-        RemoteCacheSource remoteCacheSource = getRemoteCacheSource();
-        RemoteCache remoteCache = getRemoteCache(remoteCacheSource);
         LocalCache localCache = getLocalCache();
         EasyCache easyCache = getRedisCache();
 
         CacheBeanFactory cacheBeanFactory = new CacheBeanFactory();
         cacheBeanFactory.set(LocalCache.class, localCache);
-        cacheBeanFactory.set(RemoteCache.class, remoteCache);
         cacheBeanFactory.set(RedisCache.class, easyCache);
         CacheInterceptor cacheInterceptor = new CacheInterceptor(cacheBeanFactory);
         cacheInterceptor.run();
@@ -114,13 +132,12 @@ public class JunitTest {
     @Test
     public void threadTest() throws Exception {
 
-        final RemoteCacheSource remoteCacheSource = getRemoteCacheSource();
-        final RemoteCache remoteCache = getRemoteCache(remoteCacheSource);
+        final EasyCache redisCache = getRedisCache();
 
         AtomicInteger dbNumber = new AtomicInteger(0);
         String key = "cache-thread-key";
         int expiredSeconds = 1;
-        remoteCache.register(key, new CachePolicy(
+        redisCache.register(key, new CachePolicy(
                 expiredSeconds,
                 new MissCacheHandler<Integer>(dbNumber) {
                     @Override
@@ -144,7 +161,7 @@ public class JunitTest {
                 public void run() {
                     try {
                         begin.await();
-                        Integer number = remoteCache.get("cache-thread-key", Integer.class);
+                        Integer number = redisCache.get("cache-thread-key", Integer.class);
                         System.out.println(number);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -169,40 +186,6 @@ public class JunitTest {
 
         LocalCache localCache = new LocalCache(config);
         return localCache;
-    }
-
-    public RemoteCache getRemoteCache(com.ecache.RemoteCacheSource remoteCacheSource){
-        CacheConfig config = new CacheConfig.Builder()
-                .defaultExpiredSeconds(60)
-                .schedulerCorePoolSize(64)
-                .lockSegments(32)
-                .lockIsFair(false)
-                .avoidServerOverload(true)
-                .clearSchedulerIntervalSeconds(60*60)
-                .build();
-
-        RemoteCache remoteCache = new RemoteCache(config, remoteCacheSource);
-        return remoteCache;
-    }
-
-    public com.ecache.RemoteCacheSource getRemoteCacheSource(){
-        CacheConfig config = new CacheConfig.Builder()
-                .defaultExpiredSeconds(60)
-                .schedulerCorePoolSize(64)
-                .lockSegments(32)
-                .lockIsFair(false)
-                .avoidServerOverload(true)
-                .clearSchedulerIntervalSeconds(60*60)
-                .build();
-
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(100);
-        jedisPoolConfig.setMaxIdle(20);
-        jedisPoolConfig.setMinIdle(20);
-        jedisPoolConfig.setMaxWaitMillis(1000*5);
-
-        RemoteCacheSource remoteCacheSource = new MyRemoteCacheSource(jedisPoolConfig, "127.0.0.1", 6380, 1000*5);
-        return remoteCacheSource;
     }
 
     public EasyCache getRedisCache(){
@@ -230,6 +213,9 @@ public class JunitTest {
         private int id;
         private String name;
 
+        public MyValue() {
+        }
+
         public MyValue(int id, String name) {
             this.id = id;
             this.name = name;
@@ -247,6 +233,9 @@ public class JunitTest {
     static class YourValue{
         private int id;
         private String name;
+
+        public YourValue() {
+        }
 
         public YourValue(int id, String name) {
             this.id = id;

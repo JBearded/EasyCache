@@ -1,7 +1,7 @@
 package com.test;
 
 import com.ecache.annotation.Cache;
-import com.ecache.annotation.RemoteCache;
+import com.ecache.annotation.LocalCache;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ public class UserService {
         userMap.put(3, new UserInfo(3, "quan", "345"));
     }
 
-    @Cache(instance = RedisCache.class, key = "userId_$1", expire = 5)
+    @Cache(key = "userId_$1", expired = 5)
     public String getUserName(int id) {
         System.out.println("get user name from db");
         UserInfo user = userMap.get(id);
@@ -31,7 +31,7 @@ public class UserService {
         return null;
     }
 
-    @RemoteCache(key = "userId_{$1}", expire = 5)
+    @LocalCache(key= "userId_{$1}", expired= 5)
     public List<UserInfo> getUserInfo(int id) {
         System.out.println("get user info from db");
         return Arrays.asList(userMap.get(id));

@@ -7,13 +7,9 @@ import java.lang.annotation.Target;
 
 /**
  * @author xiejunquan
- * @create 2016/12/14 16:30
+ * @create 2016/12/14 14:11
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface LocalCache {
-
-    String key() default "";
-
-    int expired() default 300;
+@Target(ElementType.TYPE)
+public @interface DefaultCache {
 }
