@@ -53,6 +53,7 @@ public class CacheProxyHandler implements MethodInterceptor {
         String key = getCacheKey(methodCacheAnInfo, args);
         Object result = getCacheValue(methodCacheAnInfo, key);
         if(result != null){
+            logger.info("hit cache key:{}", key);
             return result;
         }
         result = methodProxy.invokeSuper(object, args);
@@ -158,7 +159,7 @@ public class CacheProxyHandler implements MethodInterceptor {
     }
 
     /**
-     * 通过内部缓存获取缓存数据（内部缓存：@LocalCache和@RemoteCache注解用的缓存）
+     * 获取方法的缓存数据
      * @param methodCacheInfo    方法缓存注解信息
      * @param key   方法缓存key
      * @return
@@ -182,9 +183,9 @@ public class CacheProxyHandler implements MethodInterceptor {
     }
 
     /**
-     * 保存结果到缓存中
+     * 将方法返回值保存到缓存
      * @param methodCacheInfo  方法注解信息
-     * @param key   缓存key
+     * @param key   方法缓存key
      * @param value 缓存值
      * @return
      */
@@ -199,6 +200,10 @@ public class CacheProxyHandler implements MethodInterceptor {
         return cacheObject.set(key, value, expiredSeconds);
     }
 
+    /**
+     * 获取默认的缓存实例
+     * @return
+     */
     private Class<? extends EasyCache> getDefaultCacheInstance(){
         CacheAnnotationInfo info = CacheAnnotationInfo.getInstance();
         List defaultCacheList = info.getDefaultCacheList();
@@ -209,7 +214,7 @@ public class CacheProxyHandler implements MethodInterceptor {
     }
 
     /**
-     * 获取容器中的缓存对象
+     * 获取容器中的缓存实例
      * @param cacheClazz    缓存对象类型
      * @return
      */

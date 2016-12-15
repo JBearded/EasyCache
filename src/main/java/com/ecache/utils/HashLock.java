@@ -51,7 +51,7 @@ public class HashLock {
                     segmentLock.unlock(key);
                 }
             }
-            lockInfo.deincrement();
+            lockInfo.decrement();
             lockInfo.unlock();
         }
     }
@@ -76,7 +76,7 @@ public class HashLock {
             count.incrementAndGet();
         }
 
-        public void deincrement(){
+        public void decrement(){
             count.decrementAndGet();
         }
 

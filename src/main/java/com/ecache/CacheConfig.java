@@ -18,9 +18,9 @@ public class CacheConfig {
     protected int schedulerCorePoolSize = 64;
 
     /**
-     * 分段锁的段数, 其值限制在32<=lockSegments<=1024
+     * 分段锁的段数, 其值限制在8<=lockSegments<=32
      */
-    protected int lockSegments = 32;
+    protected int lockSegments = 16;
 
     /**
      * 是否是公平锁

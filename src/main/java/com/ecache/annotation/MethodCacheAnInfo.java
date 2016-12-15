@@ -30,14 +30,11 @@ public class MethodCacheAnInfo {
      */
     private int expiredSeconds;
 
-    private boolean avoidOverload;
-
     public MethodCacheAnInfo(Builder builder) {
         this.method = builder.method;
         this.key = builder.key;
         this.cacheClazz = builder.cacheClazz;
         this.expiredSeconds = builder.expiredSeconds;
-        this.avoidOverload = builder.avoidOverload;
     }
 
     public Method getMethod() {
@@ -56,17 +53,12 @@ public class MethodCacheAnInfo {
         return expiredSeconds;
     }
 
-    public boolean isAvoidOverload() {
-        return avoidOverload;
-    }
-
     @Override
     public String toString() {
         return new StringBuilder(super.toString())
-                .append("_").append(key)
                 .append("_").append(method)
+                .append("_").append(key)
                 .append("_").append(expiredSeconds)
-                .append("_").append(avoidOverload)
                 .toString();
     }
 
@@ -92,8 +84,6 @@ public class MethodCacheAnInfo {
          */
         private int expiredSeconds;
 
-        private boolean avoidOverload;
-
         public Builder method(Method method){
             this.method = method;
             return this;
@@ -111,11 +101,6 @@ public class MethodCacheAnInfo {
 
         public Builder expiredSeconds(int expiredSeconds){
             this.expiredSeconds = expiredSeconds;
-            return this;
-        }
-
-        public Builder avoidOverload(boolean avoidOverload){
-            this.avoidOverload = avoidOverload;
             return this;
         }
 

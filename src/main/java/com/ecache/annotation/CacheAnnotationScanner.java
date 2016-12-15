@@ -35,6 +35,7 @@ public class CacheAnnotationScanner {
             DefaultCache defaultCache = clazz.getAnnotation(DefaultCache.class);
             if(defaultCache != null && EasyCache.class.isAssignableFrom(clazz)){
                 defaultCacheList.add(clazz);
+                logger.info("default cache instance:{}", clazz.getName());
             }
             List<MethodCacheAnInfo> annList = new ArrayList<>();
             for(Method method : clazz.getDeclaredMethods()){
@@ -44,10 +45,12 @@ public class CacheAnnotationScanner {
                     Class<? extends EasyCache> instance = cacheAnInfo.getCacheClazz();
                     boolean haveDefaultCache = instance == null || instance.equals(NullCacheInstance.class);
                     useDefaultCache = (haveDefaultCache) ? true : useDefaultCache;
+                    logger.info("@Cache info:{}.{}", clazz.getName(), cacheAnInfo);
                 }
                 MethodCacheAnInfo localCacheAnInfo = getLocalCache(method);
                 if(localCacheAnInfo != null){
                     annList.add(localCacheAnInfo);
+                    logger.info("@LocalCache info:{}.{}", clazz.getName(), localCacheAnInfo);
                 }
             }
             if(!annList.isEmpty()){

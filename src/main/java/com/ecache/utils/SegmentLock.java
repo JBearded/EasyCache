@@ -10,8 +10,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SegmentLock {
 
-    private int MIN_SEGMENTS = 32;
-    private int MAX_SEGMENTS = 1024;
+    private int MIN_SEGMENTS = 8;
+    private int MAX_SEGMENTS = 32;
     private int segments;
     private final Map<Integer, ReentrantLock> lockMap = new HashMap<>();
 

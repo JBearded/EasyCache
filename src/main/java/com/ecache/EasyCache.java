@@ -7,6 +7,12 @@ package com.ecache;
 public interface EasyCache {
 
 
+    /**
+     * 注册缓存策略到EasyCache中
+     * @param key   缓存key
+     * @param cachePolicy   缓存策略(定时或过期)
+     * @param <T>
+     */
     <T> void register(String key, CachePolicy<T> cachePolicy);
 
     /**

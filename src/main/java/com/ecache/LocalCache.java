@@ -74,7 +74,7 @@ public class LocalCache extends AbstractCacheRegistrar {
                     ? null
                     : (T) localValue.get().value;
             if(result == null){
-                logger.info("local cache get key:{} null and reload", key);
+                logger.info("local cache get null and reload, key:{}", key);
                 caches.remove(key);
                 result = (handler == null) ? null : set(key, handler.getData(), expiredSeconds);
             }

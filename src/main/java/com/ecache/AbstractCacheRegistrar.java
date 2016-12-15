@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * 缓存注册器
  * @author xiejunquan
  * @create 2016/12/1 19:07
  */
@@ -51,7 +52,7 @@ public abstract class AbstractCacheRegistrar implements EasyCache{
         hashLock.lock(key);
         try{
             if(cachePolicyRegister.containsKey(key)){
-                logger.info("cache contains key register {} and remove", key);
+                logger.info("EasyCache contains key register:{} and remove", key);
                 CachePolicy oldCachePolicy = cachePolicyRegister.remove(key);
                 if(oldCachePolicy.isTiming()){
                     scheduler.cancel(key);
@@ -72,14 +73,20 @@ public abstract class AbstractCacheRegistrar implements EasyCache{
     private  <T> void initPolicy(String key, CachePolicy<T> cachePolicy){
         cachePolicyRegister.put(key, cachePolicy);
         if(cachePolicy.isTiming()){
-            logger.info("init cache timing policy, key:{}", key);
+            logger.info("register timing cache policy and init, key:{}", key);
             initIntervalCache(key, cachePolicy);
         }else if(cachePolicy.isExpired()){
-            logger.info("init cache expired policy, key:{}", key);
+            logger.info("init expired cache policy and init, key:{}", key);
             initExpiredCache(key, cachePolicy);
         }
     }
 
+    /**
+     * 初始化定时缓存
+     * @param key   缓存key
+     * @param cachePolicy   缓存策略
+     * @param <T>   返回值类型
+     */
     private <T> void initIntervalCache(String key, CachePolicy<T> cachePolicy){
         scheduler.run(
                 key,
@@ -107,11 +114,17 @@ public abstract class AbstractCacheRegistrar implements EasyCache{
         }
     }
 
+    /**
+     * 初始化过期缓存
+     * @param key   缓存key
+     * @param cachePolicy   缓存策略
+     * @param <T>   返回类型
+     * @return
+     */
     private <T> T initExpiredCache(String key, CachePolicy<T> cachePolicy){
         MissCacheHandler<T> handler = cachePolicy.getMissCacheHandler();
         T value = handler.getData();
-        return (cachePolicy.getExpiredSeconds() <= 0)
-                ? set(key, value, cacheConfig.getDefaultExpiredSeconds())
-                : set(key, value, cachePolicy.getExpiredSeconds());
+        int expired = (cachePolicy.getExpiredSeconds() <= 0) ? cacheConfig.getDefaultExpiredSeconds() : cachePolicy.getExpiredSeconds();
+        return set(key, value, expired);
     }
 }

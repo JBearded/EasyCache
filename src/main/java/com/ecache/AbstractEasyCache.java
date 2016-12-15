@@ -1,12 +1,16 @@
 package com.ecache;
 
 import com.alibaba.fastjson.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author xiejunquan
  * @create 2016/12/1 16:00
  */
 public abstract class AbstractEasyCache extends AbstractCacheRegistrar implements EasyCacheSource {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractEasyCache.class);
 
     public AbstractEasyCache(CacheConfig cacheConfig) {
         super(cacheConfig);
@@ -44,6 +48,7 @@ public abstract class AbstractEasyCache extends AbstractCacheRegistrar implement
             hashLock.lock(key);
             try{
                 result = getString(key);
+                logger.info("avoid server over and reget, key:{}, value:{}", key, result);
                 if(result == null){
                     return set(key, handler.getData(), expiredSeconds);
                 }

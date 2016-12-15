@@ -43,14 +43,14 @@ public class CacheInterceptor {
     }
 
     /**
-     * 扫描所有的有LocalCache,RemoteCache和Cache注解的类方法, 并将缓存代理类存入Bean容器
+     * 扫描所有的EasyCache注解的类方法, 并将缓存代理类存入Bean容器
      */
     public void run(){
         this.run("");
     }
 
     /**
-     * 扫描包名下的有LocalCache,RemoteCache和Cache注解的类方法, 并将缓存代理类存入Bean容器
+     * 扫描包名下的有EasyCache注解的类方法, 并将缓存代理类存入Bean容器
      * @param pack 需要扫描的包名
      */
     public void run(String pack){

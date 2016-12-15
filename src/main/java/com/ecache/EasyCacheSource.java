@@ -1,6 +1,7 @@
 package com.ecache;
 
 /**
+ * EasyCache数据源接口
  * @author xiejunquan
  * @create 2016/12/2 9:42
  */
